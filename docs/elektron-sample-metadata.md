@@ -130,3 +130,76 @@ running firmware 1.53.
 
 This confirms the tested device, firmware and sample path.
 It does not establish compatibility with every Elektron device.
+
+## Batch sample metadata
+
+The `sample-info-batch` command retrieves metadata for multiple
+samples using a single device connection.
+
+### Syntax
+
+```sh
+elektroid-cli elektron:sample:sample-info-batch \
+  'DEVICE_NUMBER:/PATH/TO/SAMPLE_1' \
+  'DEVICE_NUMBER:/PATH/TO/SAMPLE_2'
+```
+
+All sample paths must refer to the same device.
+
+### Example
+
+The following command requests the same sample twice to demonstrate
+multiple metadata requests over one connection:
+
+```sh
+elektroid-cli elektron:sample:sample-info-batch \
+  '13:/01_KICKS/0001-01w drums - AMB K' \
+  '13:/01_KICKS/0001-01w drums - AMB K'
+```
+
+The expected output format is tab-separated values (TSV):
+
+```text
+path    id    size    hash
+/01_KICKS/0001-01w drums - AMB K    543    35172    e3e6f3c1
+/01_KICKS/0001-01w drums - AMB K    543    35172    e3e6f3c1
+```
+
+The actual output uses tab characters between columns.
+
+The values shown come from a previously validated single-sample
+request on a Digitakt I running firmware 1.53. The batch output
+must be checked separately on hardware.
+
+### Output columns
+
+- `path`: absolute sample path, without the device number.
+- `id`: unsigned decimal sample identifier.
+- `size`: sample size in bytes.
+- `hash`: 32-bit hash printed as eight hexadecimal digits.
+
+The first row contains the column names.
+
+### Error handling
+
+The command validates all sample paths before opening a MIDI
+connection.
+
+It rejects:
+
+- Missing sample paths.
+- Malformed device paths.
+- Paths referring to different devices.
+- Paths containing tabs or line breaks.
+
+If a metadata request fails, the command returns a nonzero exit
+status. The implementation buffers its output so that a failed
+batch does not emit incomplete TSV data.
+
+### Compatibility
+
+The underlying sample metadata requests have been validated on
+a Digitakt I running firmware 1.53.
+
+Batch retrieval was validated on a Digitakt I running firmware 1.53.
+Compatibility with other Elektron devices is not guaranteed.
