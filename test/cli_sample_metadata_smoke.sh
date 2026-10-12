@@ -3,7 +3,7 @@
 # No MIDI device is required.
 set -eu
 
-CLI="${1:-./src/elektroid-cli}"
+CLI="${1:-${ELEKTROID_CLI:-./src/elektroid-cli}}"
 
 if [ ! -x "$CLI" ]; then
     echo "Executable not found: $CLI" >&2

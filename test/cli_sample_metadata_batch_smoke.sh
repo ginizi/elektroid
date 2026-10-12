@@ -3,7 +3,7 @@
 # These tests do not require a MIDI device.
 set -eu
 
-CLI="${1:-./src/elektroid-cli}"
+CLI="${1:-${ELEKTROID_CLI:-./src/elektroid-cli}}"
 COMMAND="elektron:sample:sample-info-batch"
 
 if [ ! -x "$CLI" ]; then

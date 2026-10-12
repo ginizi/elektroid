@@ -250,10 +250,16 @@ tests_logue_SOURCES = \
 	../src/connectors/scala.c \
 	../src/connectors/scala.h
 
-TESTS = integration/test.sh integration/system_all_fs_tests.sh $(check_PROGRAMS)
+TESTS = integration/test.sh integration/system_all_fs_tests.sh $(check_PROGRAMS) \
+	cli_sample_metadata_smoke.sh \
+	cli_sample_metadata_batch_smoke.sh
 
-EXTRA_DIST = integration res
+EXTRA_DIST = integration res \
+	cli_sample_metadata_smoke.sh \
+	cli_sample_metadata_batch_smoke.sh
 
 AM_TESTS_ENVIRONMENT = \
 	ecli='$(abs_top_builddir)/src/elektroid-cli -vv'; \
-	export ecli;
+	export ecli; \
+	ELEKTROID_CLI='$(abs_top_builddir)/src/elektroid-cli'; \
+	export ELEKTROID_CLI;
