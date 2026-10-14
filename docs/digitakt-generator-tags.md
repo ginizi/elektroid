@@ -99,7 +99,7 @@ Do not mix `--map` with legacy `--folder`, `--bank` or `--start-slot`.
 The legacy syntax below remains supported for compatibility.
 
 **Remove `--dry-run` only when ready to clear and replace the displayed slots
-after answering `OUI`. There is no automatic backup.** The configured MIDI
+after answering `YES`. There is no automatic backup.** The configured MIDI
 device index still needs to match the Digitakt pair.
 
 ### Compact preview
@@ -162,7 +162,8 @@ The preview lists source paths/ranks, sound names, tags, slots and remote
 sample paths. **Only `--dry-run` guarantees no MIDI connection or hardware
 write. Without it, execution is the default.** The script checks that the
 configured MIDI index is the Digitakt pair, inventories target slots and
-requires the exact interactive answer `OUI` before any write. Refusal or EOF
+requires the exact interactive answer `YES` before any write (`OUI` is also
+accepted for compatibility). Refusal or EOF
 cancels. Occupied slots are listed and will be replaced after confirmation.
 
 There is no automatic backup. Each sound is generated before clearing only
