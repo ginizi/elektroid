@@ -32,7 +32,7 @@ class ProgressTest(unittest.TestCase):
         stream = io.StringIO()
         job = {'bank': 'D', 'slot': 1, 'wav': Path('sample.wav')}
         with patch('sys.stdout', stream):
-            print_progress(1, 2, job, [10], {'ffmpeg': 1, 'sound_upload': 3})
+            print_progress(1, 2, job, [10], {'ffmpeg': 1, 'sound_upload': 3}, verbose=True)
         text = stream.getvalue()
         self.assertNotIn('\033', text)
         for label in ('Conversion', 'WAV upload', 'Metadata', 'Generation',
@@ -45,6 +45,17 @@ class ProgressTest(unittest.TestCase):
         with patch('sys.stdout', stream):
             print_progress(1, 1, {'bank': 'D', 'slot': 1, 'wav': Path('sample.wav')}, [1], {})
         self.assertTrue(stream.getvalue().startswith('\033[2J\033[H'))
+
+    def test_default_progress_hides_phase_timings(self):
+        stream = io.StringIO()
+        with patch('sys.stdout', stream):
+            print_progress(1, 2, {'bank': 'D', 'slot': 1, 'wav': Path('sample.wav')},
+                           [10], {'ffmpeg': 1, 'sound_upload': 3})
+        text = stream.getvalue()
+        self.assertNotIn('Conversion', text)
+        self.assertNotIn('Measured total', text)
+        for label in ('Progress', 'Elapsed', 'Remaining', 'Estimated finish'):
+            self.assertIn(label, text)
 
 
 if __name__ == '__main__':
