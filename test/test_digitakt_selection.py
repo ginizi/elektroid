@@ -139,7 +139,7 @@ class SelectionTest(unittest.TestCase):
                     patch('builtins.input', return_value='non'), redirect_stdout(io.StringIO()):
                 with self.assertRaisesRegex(SystemExit, 'Annulé'):
                     generator.main()
-                self.assertEqual(generator.DEVICE, '13')
+                self.assertEqual(generator.DEVICE, previous)
                 self.assertEqual(midi.call_args_list[1].args[0],
                                  [cli, 'elektron:data:ls', '13:/soundbanks/D'])
         finally:

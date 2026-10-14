@@ -1,19 +1,16 @@
-import importlib.machinery
-import importlib.util
 from pathlib import Path
 import tempfile
 import shutil
 import subprocess
 import hashlib
+import sys
 import unittest
 import zlib
 
 
 ROOT = Path(__file__).resolve().parents[1]
-loader = importlib.machinery.SourceFileLoader("dt_build_banks", str(ROOT / "dt-build-banks"))
-spec = importlib.util.spec_from_loader(loader.name, loader)
-generator = importlib.util.module_from_spec(spec)
-loader.exec_module(generator)
+sys.path.insert(0, str(ROOT))
+from digitakt import cli as generator
 
 
 class SoundTagsTest(unittest.TestCase):
@@ -73,6 +70,8 @@ class SoundTagsTest(unittest.TestCase):
             root = Path(directory)
             (root / "src").mkdir()
             shutil.copy(ROOT / "dt-make-sound", root / "dt-make-sound")
+            shutil.copytree(ROOT / 'digitakt', root / 'digitakt',
+                            ignore=shutil.ignore_patterns('__pycache__'))
             if (ROOT / 'dt_sound_defaults.py').exists():
                 shutil.copy(ROOT / 'dt_sound_defaults.py', root / 'dt_sound_defaults.py')
             for path in [root / "src/elektroid-cli", root / "dt-sample-meta"]:

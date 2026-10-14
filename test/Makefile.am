@@ -261,7 +261,8 @@ EXTRA_DIST = integration res \
 	cli_sample_metadata_batch_smoke.sh
 
 EXTRA_DIST += test_digitakt_generator_tags.sh test_digitakt_generator_tags.py \
-	test_digitakt_selection.py test_digitakt_maps.py test_digitakt_session_paths.py
+	test_digitakt_selection.py test_digitakt_maps.py test_digitakt_session_paths.py \
+	test_digitakt_execution.py
 
 AM_TESTS_ENVIRONMENT = \
 	ecli='$(abs_top_builddir)/src/elektroid-cli -vv'; \
