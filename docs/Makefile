@@ -5,11 +5,12 @@ CONTRIBUTING=../CONTRIBUTING.md
 
 all: $(README) $(CONTRIBUTING) license.md
 
-$(README): index.md license.md installation.md packaging.md cli.md api.md contributing.md
+$(README): fork.md index.md license.md installation.md packaging.md cli.md api.md contributing.md
 	echo '# Elektroid' > $(README)
 	echo >> $(README)
 	echo '[//]: # (Do not modify this file manually.)' >> $(README)
 	echo '[//]: # (This file is generated from the docs directory by executing `make clean; make`.)' >> $(README)
+	sed 's/](\([^)]*\.md\)/](docs\/\1/g' fork.md >> $(README)
 	tail -n +4 index.md | sed "s^images/screenshot.png^docs/images/screenshot.png^" >> $(README)
 	tail -n +7 license.md >> $(README)
 	tail -n +7 installation.md >> $(README)
