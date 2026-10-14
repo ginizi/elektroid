@@ -28,8 +28,9 @@ them; no installation framework or new Python dependency is required.
 The configuration is passed explicitly: parsing `--device` does not mutate
 a global device value. Execution accepts a command runner and session factory
 for offline tests. The session is a context manager and closes on success,
-failure or interruption. The batch has one pass, no retry and no automatic
-download. Progress shows elapsed/remaining time and estimated finish.
+failure or interruption. The batch collects failed transfers and retries them
+once at the end, without automatic download. Progress shows elapsed/remaining
+time and estimated finish.
 With `--verbose`, it also shows conversion, WAV upload, metadata, generation
 and clear/sound-upload timings and the measured phase total.
 The dashboard refreshes an interactive terminal; redirected output contains
@@ -226,8 +227,20 @@ No separate clear/download CLI connection is opened during this session.
 This avoids both per-sound reconnect delays and the competing connection
 sequence problem observed previously.
 
-On the first error, the batch stops and closes the session. Existing offline
-tests cover clear/upload ordering, failures, multiple sounds without CLI
+After a transfer error, the batch records the slot, phase and error, then
+continues. A successful transfer resets the consecutive-failure counter.
+Ten consecutive failures stop execution immediately, without starting or
+continuing the final retry pass. The counter carries over between passes.
+Otherwise, each failed transfer gets one final attempt, starting at its failed
+phase. A confirmed clear is not repeated if the sound upload failed.
+
+The final summary lists completed, recovered, failed and unexecuted slots.
+Unresolved failures or unexecuted slots produce a nonzero exit status.
+There is no rollback: earlier writes remain, and a failed slot may be empty
+or partially modified. Initial connection and directory preparation remain
+blocking prerequisites; disconnected sessions are not automatically reopened.
+
+Existing offline tests cover retry limits, clear/upload ordering, failures, multiple sounds without CLI
 connections and strict slot path validation. Rebuild `src/elektroid-cli` before
 using this script version: it needs the experimental session `DATA_CL` command.
 Hardware throughput still needs measurement; no fixed runtime is guaranteed.
