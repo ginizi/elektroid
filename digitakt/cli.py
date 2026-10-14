@@ -4,8 +4,10 @@ import argparse
 from pathlib import Path
 import time
 import uuid
+import shlex
 from .planning import (MapAction, MapOptionAction, parse_map, parse_range,
-                       parse_folder_spec, build_plan, build_maps_plan, DEFAULT_MAPPING_HELP)
+                       parse_folder_spec, build_plan, build_maps_plan, DEFAULT_MAPPING_HELP,
+                       CapacityError)
 from .sound import create_default_sound, make_sound_data, FOLDER_TAGS, TAG_NAMES
 from .transport import Config, cmd, DTSession, verify_device
 from .transport import check_destinations as list_destinations
@@ -87,8 +89,16 @@ def main(argv=None):
     if not args.maps and not args.folder:
         print('No --map/--folder provided: samples use category-based banks A-H.')
         print(DEFAULT_MAPPING_HELP + '\n')
-    jobs, summary = (build_maps_plan(root, args.maps) if args.maps else
-                     build_plan(root, args.limit, args.folder, args.bank, args.start_slot))
+    try:
+        jobs, summary = (build_maps_plan(root, args.maps) if args.maps else
+                         build_plan(root, args.limit, args.folder, args.bank, args.start_slot))
+    except CapacityError as exc:
+        if args.maps or args.folder:
+            raise
+        command = shlex.join(['./dt-build-banks', str(root), '--limit', '256',
+                              '--device', str(args.device), '-n'])
+        raise SystemExit(f'{exc}\nPreview up to 256 WAVs per default bank from slot 1:\n'
+                         f'  {command}') from None
     config = Config(CLI, str(args.device), BASE / 'generated_sounds')
     print_plan(jobs, summary, args.verbose, config.device)
     if not jobs:

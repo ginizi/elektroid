@@ -26,6 +26,10 @@ DEFAULT_MAPPING_HELP = (
 )
 
 
+class CapacityError(SystemExit):
+    """Selection exceeds its bank; the CLI can supply a contextual suggestion."""
+
+
 def natural_key(value):
     return [int(part) if part.isdigit() else part.casefold()
             for part in re.split(r'(\d+)', value)]
@@ -142,7 +146,7 @@ def plan_folder(folder, first, last, limit, bank=None, start=None):
         files = files[:limit]
     available = 257 - start
     if len(files) > available:
-        raise SystemExit(
+        raise CapacityError(
             f'The folder "{folder.name}" ({folder}) contains {eligible:,} eligible WAV files.\n'
             f'This selection sends {len(files):,} files to bank {bank}, starting at slot {start}.\n'
             f'Bank {bank} holds at most 256 sounds; {available} slots available '
@@ -150,9 +154,7 @@ def plan_folder(folder, first, last, limit, bank=None, start=None):
             'The command was cancelled before any transfer, including to other banks.\n\n'
             f'Reduce this selection to at most {available} WAVs with --limit {available}, '
             'or choose a smaller --map/--range selection.\n'
-            'Without --map/--folder, --limit applies to each default bank.\n'
-            'Preview up to 256 WAVs per default bank from slot 1:\n'
-            '  ./dt-build-banks "/path/to/sample-library" --limit 256 -n')
+            'Without --map/--folder, --limit applies to each default bank.')
     jobs = []
     for offset, wav in enumerate(files):
         name = wav.stem[:32].rstrip(' .')
