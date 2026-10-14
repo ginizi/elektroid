@@ -24,16 +24,41 @@ def check_destinations(jobs, config=None):
 
 
 def parse_args(argv=None):
-    parser = argparse.ArgumentParser(description='Build Digitakt I sound banks')
+    parser = argparse.ArgumentParser(
+        description='Build Digitakt I sound banks',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog='Example usage:\n'
+               '  ./dt-build-banks "/path/to/sample-library" \\\n'
+               '    -m "03 Claps:D" -r 1:10 -f 1 -n\n\n'
+               '  ROOT is "/path/to/sample-library", containing the "03 Claps" folder.\n'
+               '  -n previews transfers without MIDI connection or writes.\n\n'
+               'Combine multiple mappings in one command:\n'
+               '  ./dt-build-banks "/path/to/sample-library" \\\n'
+               '    -m "03 Claps:D" -r 1:10 -f 1 \\\n'
+               '    -m "02 Snares:B" -l 10 -f 20 -n\n\n'
+               '  Repeat -m/--map to combine folders and destination banks.\n'
+               '  -r, -l and -f apply to the preceding mapping until the next -m/--map.\n\n'
+               'Populate banks A-H (up to 256 available samples per bank):\n'
+               '  ./src/elektroid-cli ld\n'
+               '  Replace INDEX below with the current Digitakt MIDI index.\n'
+               '  Preview first:\n'
+               '    ./dt-build-banks "/path/to/sample-library" --limit 256 --device INDEX -n\n'
+               '  Write after reviewing the preview (confirmation required):\n'
+               '    ./dt-build-banks "/path/to/sample-library" --limit 256 --device INDEX\n\n'
+               '  Filling all 2,048 slots requires 256 eligible WAVs per category after filters.\n'
+               '  Samples are not repeated; fewer WAVs leave remaining slots unchanged.\n'
+               '  Target slots are cleared and overwritten; no automatic backup.')
     parser.add_argument('root', type=Path, help='root directory containing sample folders')
-    parser.add_argument('-n', '--dry-run', action='store_true', help='preview without MIDI or writes')
+    parser.add_argument('-n', '--dry-run', action='store_true',
+                        help='Preview planned transfers without MIDI connection or writes. '
+                             'Without this option, execute after confirmation.')
     parser.add_argument('-l', '--limit', type=int, action=MapOptionAction, help='maximum per selection')
     parser.add_argument('--folder', action='append', type=parse_folder_spec,
                         metavar='FOLDER[:FIRST:LAST]', help='legacy selection, repeatable')
     parser.add_argument('-b', '--bank', help='bank A–H (one --folder only)')
     parser.add_argument('-s', '--start-slot', type=int, help='first destination slot (one --folder only)')
     parser.add_argument('-m', '--map', dest='maps', type=parse_map, action=MapAction,
-                        help='FOLDER:BANK; starts a selection group')
+                        help='FOLDER:BANK; repeatable; starts a selection group')
     parser.add_argument('-r', '--range', type=parse_range, action=MapOptionAction,
                         help='FIRST:LAST source range for the preceding --map')
     parser.add_argument('-f', '--from-slot', type=int, action=MapOptionAction,
