@@ -20,7 +20,7 @@ class ShortOptionsTest(unittest.TestCase):
             binary = root / 'cli'
             binary.touch()
             files = [folder / f'kick{i}.wav' for i in range(300)]
-            for selection in ([], ['-m', '01 Kicks:A']):
+            for selection in ([], ['-m', '01 Kicks:A', '--tag', 'KICK']):
                 with self.subTest(selection=selection), patch.object(cli, 'CLI', binary), \
                         patch('digitakt.planning.inventory', return_value=files), \
                         redirect_stdout(io.StringIO()), self.assertRaises(SystemExit) as error:
@@ -74,7 +74,7 @@ class ShortOptionsTest(unittest.TestCase):
         text = output.getvalue()
         self.assertIn('repeatable; starts a selection group', ' '.join(text.split()))
         self.assertIn('Combine multiple mappings in one command:', text)
-        self.assertIn('-m "02 Snares:B" -l 10 -f 20 -n', text)
+        self.assertIn('-m "02 Snares:B" --tag SNARE -l 10 -f 20 -n', text)
         self.assertIn('until the next -m/--map', text)
 
     def test_help_shows_full_bank_preview_and_write(self):
@@ -96,7 +96,7 @@ class ShortOptionsTest(unittest.TestCase):
         text = output.getvalue()
         self.assertIn('Example usage:', text)
         self.assertIn('./dt-build-banks "/path/to/sample-library"', text)
-        self.assertIn('-m "03 Claps:D" -r 1:10 -f 1 -n', text)
+        self.assertIn('-m "03 Claps:D" --tag CLAP -r 1:10 -f 1 -n', text)
         self.assertIn('containing the "03 Claps" folder', text)
 
     def test_dry_run_help_explains_preview_and_execution(self):
@@ -110,10 +110,10 @@ class ShortOptionsTest(unittest.TestCase):
         self.assertIn('Without this option, execute after confirmation.', help_text)
 
     def test_grouped_aliases_match_long_options(self):
-        short = ['ROOT', '-d', '13', '-m', '03 Claps:D', '-r', '1:10', '-f', '1',
-                 '-m', '02 Snares:B', '-l', '10', '-f', '20', '-n', '-v']
-        long = ['ROOT', '--device', '13', '--map', '03 Claps:D', '--range', '1:10',
-                '--from-slot', '1', '--map', '02 Snares:B', '--limit', '10',
+        short = ['ROOT', '-d', '13', '-m', '03 Claps:D', '--tag', 'CLAP', '-r', '1:10', '-f', '1',
+                 '-m', '02 Snares:B', '--tag', 'SNARE', '-l', '10', '-f', '20', '-n', '-v']
+        long = ['ROOT', '--device', '13', '--map', '03 Claps:D', '--tag', 'CLAP', '--range', '1:10',
+                '--from-slot', '1', '--map', '02 Snares:B', '--tag', 'SNARE', '--limit', '10',
                 '--from-slot', '20', '--dry-run', '--verbose']
         self.assertEqual(vars(cli.parse_args(short)), vars(cli.parse_args(long)))
 
@@ -123,8 +123,8 @@ class ShortOptionsTest(unittest.TestCase):
         self.assertEqual(vars(cli.parse_args(short)), vars(cli.parse_args(long)))
 
     def test_mixed_options_and_scope(self):
-        args = cli.parse_args(['ROOT', '-m', '03 Claps:D', '--range', '4:5',
-                               '-f', '10', '--map', '02 Snares:B', '-l', '2', '-n'])
+        args = cli.parse_args(['ROOT', '-m', '03 Claps:D', '--tag', 'CLAP', '--range', '4:5',
+                               '-f', '10', '--map', '02 Snares:B', '--tag', 'SNARE', '-l', '2', '-n'])
         self.assertEqual(args.maps[0]['range'], (4, 5))
         self.assertEqual(args.maps[0]['from_slot'], 10)
         self.assertNotIn('range', args.maps[1])
@@ -140,7 +140,7 @@ class ShortOptionsTest(unittest.TestCase):
             binary.touch()
             with patch.object(cli, 'CLI', binary), patch.object(cli, 'cmd') as midi, \
                     patch.object(cli, 'DTSession') as session, redirect_stdout(io.StringIO()):
-                cli.main([str(root), '-d', '13', '-m', '03 Claps:D', '-l', '1', '-n', '-v'])
+                cli.main([str(root), '-d', '13', '-m', '03 Claps:D', '--tag', 'CLAP', '-l', '1', '-n', '-v'])
                 midi.assert_not_called()
                 session.assert_not_called()
 

@@ -16,7 +16,7 @@ from digitakt import cli
 class ReportTest(unittest.TestCase):
     def job(self):
         return dict(bank='D', slot=10, label='CLAP', source_folder='03 Claps',
-                    wav=Path('/source/clap,one.wav'), remote='01_CLAPS', remote_name='clap')
+                    wav=Path('/source/clap,one.wav'), remote='01_CLAPS', remote_name='clap', tag='CLAP')
 
     def rows(self, path):
         with path.open(newline='', encoding='utf-8') as stream:
@@ -65,7 +65,7 @@ class ReportTest(unittest.TestCase):
             path = root / 'report.csv'
             with patch.object(cli, 'CLI', binary), patch.object(cli, 'cmd') as midi, \
                     redirect_stdout(io.StringIO()):
-                cli.main([str(root), '-m', '03 Claps:D', '-n', '--report', str(path)])
+                cli.main([str(root), '-m', '03 Claps:D', '--tag', 'CLAP', '-n', '--report', str(path)])
             midi.assert_not_called()
             self.assertEqual(self.rows(path)[0]['status'], 'planned')
 
