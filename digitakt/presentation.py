@@ -62,7 +62,7 @@ def format_duration(seconds):
     return f'{hours:02d}:{minutes:02d}:{seconds:02d}'
 
 
-def print_progress(position, total, job, durations, timings):
+def print_progress(position, total, job, durations, timings, verbose=False):
     elapsed = sum(durations)
     remaining = elapsed / position * (total - position)
     finish = datetime.now() + timedelta(seconds=remaining)
@@ -74,14 +74,15 @@ def print_progress(position, total, job, durations, timings):
     print(f"[{position}/{total}] {job['bank']}{job['slot']:03d}  {job['wav'].name}")
     print(f'Progress: [{bar}] {100 * position / total:.1f}%')
     print(f'Successful: {position}  Failed: 0  Status: OK\n')
-    print('Last sound timings')
-    for label, key in (('Conversion', 'ffmpeg'), ('WAV upload', 'sample_upload'),
-                       ('Metadata', 'metadata'), ('Generation', 'generate'),
-                       ('Clear + sound', 'sound_upload')):
-        value = timings.get(key)
-        text = '---' if value is None else f'{value:.2f} s'
-        print(f'{label:<17}: {text}')
-    print(f'Measured total   : {sum(timings.values()):.2f} s\n')
+    if verbose:
+        print('Last sound timings')
+        for label, key in (('Conversion', 'ffmpeg'), ('WAV upload', 'sample_upload'),
+                           ('Metadata', 'metadata'), ('Generation', 'generate'),
+                           ('Clear + sound', 'sound_upload')):
+            value = timings.get(key)
+            text = '---' if value is None else f'{value:.2f} s'
+            print(f'{label:<17}: {text}')
+        print(f'Measured total   : {sum(timings.values()):.2f} s\n')
     print(f'Last sound       : {format_duration(durations[-1])}')
     print(f'Elapsed          : {format_duration(elapsed)}')
     print(f'Remaining        : ~{format_duration(remaining)}')

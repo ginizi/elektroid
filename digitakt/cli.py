@@ -37,7 +37,7 @@ def parse_args(argv=None):
     parser.add_argument('--from-slot', type=int, action=MapOptionAction,
                         help='first destination slot for the preceding --map, default 1')
     parser.add_argument('--device', type=int, default=int(DEVICE), help='MIDI device index, default 1')
-    parser.add_argument('--verbose', action='store_true', help='show individual files')
+    parser.add_argument('--verbose', action='store_true', help='show individual files and phase timings')
     args = parser.parse_args(argv)
     if args.device < 0:
         parser.error('--device must be a non-negative integer')
@@ -68,4 +68,4 @@ def main(argv=None):
     confirm_execution(jobs, occupied)
     print('Starting in 3 seconds (Ctrl-C to cancel)...')
     time.sleep(3)
-    execute_jobs(jobs, config, runner=cmd, session_factory=DTSession)
+    execute_jobs(jobs, config, runner=cmd, session_factory=DTSession, verbose=args.verbose)

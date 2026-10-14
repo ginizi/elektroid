@@ -54,7 +54,7 @@ def process_job(job, config, session, runner):
     return timings
 
 
-def execute_jobs(jobs, config, runner=cmd, session_factory=DTSession):
+def execute_jobs(jobs, config, runner=cmd, session_factory=DTSession, verbose=False):
     prepare_directories(jobs, config, runner)
     durations = []
     with session_factory(config.cli, config.device) as session:
@@ -71,5 +71,5 @@ def execute_jobs(jobs, config, runner=cmd, session_factory=DTSession):
                                  f'Completed: {completed}. Not executed: {pending}. '
                                  'The failed slot may have been partially modified.') from exc
             durations.append(time.monotonic() - start)
-            print_progress(position, len(jobs), job, durations, timings)
+            print_progress(position, len(jobs), job, durations, timings, verbose=verbose)
     print(f'DONE — {len(jobs)} successful, 0 failed, {sum(durations):.2f}s')
