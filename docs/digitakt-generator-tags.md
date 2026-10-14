@@ -74,6 +74,29 @@ The tests also run through `make check` when Python 3 is available.
 
 ### Explicit folder-to-bank mappings
 
+Short and long options may be mixed without changing selection groups:
+
+| Short | Long |
+| --- | --- |
+| `-m` | `--map` |
+| `-r` | `--range` |
+| `-f` | `--from-slot` |
+| `-l` | `--limit` |
+| `-d` | `--device` |
+| `-n` | `--dry-run` |
+| `-v` | `--verbose` |
+| `-b` | `--bank` (legacy) |
+| `-s` | `--start-slot` (legacy) |
+| `-h` | `--help` |
+
+`--folder` has no short alias. For example, preview without MIDI:
+
+```sh
+./dt-build-banks ROOT -d 13 \
+  -m "03 Claps":D -r 1:10 -f 1 \
+  -m "02 Snares":B -l 10 -f 20 -n -v
+```
+
 Use repeatable `--map "FOLDER":BANK` groups to choose each destination:
 
 ```sh
