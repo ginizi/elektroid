@@ -2,26 +2,22 @@
 
 The experimental generators use built-in Digitakt I sound parameters and
 require no template file or template argument.
-
 Tag values were verified on
 firmware 1.53.
 
 The shared `dt_sound_defaults.py` module contains the hardware-validated A007
 model as immutable bytes and returns an independent validated copy.
-
 This is
 an internal model, not a complete decoded specification or a claim to match
 factory INIT settings.
 
 The generators replace its name, tags, file index and sample references
 and recalculate the CRC.
-
 Keep the module beside the scripts.
 
 ## Python organization
 
 Both commands are thin entry points.
-
 Keep the `digitakt/` package beside
 them; no installation framework or new Python dependency is required.
 
@@ -52,7 +48,6 @@ The dashboard refreshes an interactive terminal; redirected output contains
 plain snapshots without terminal escape sequences.
 
 ETA is an indicative average, not a promise.
-
 Elapsed time covers processed jobs, excluding preflight
 and the confirmation delay.
 
@@ -87,9 +82,7 @@ upload the sound; sample metadata retrieval still opens a MIDI connection.
 The existing individual wrapper's hard-coded device handling is unchanged.
 
 The four-byte big-endian tag field is at payload offset 8 (file offset 39).
-
 It is replaced before recalculating the CRC.
-
 Template tags are not retained.
 
 The built-in model is uncompressed; there is no new LZ4 dependency.
@@ -137,7 +130,6 @@ This distinction is also explained in `--help`.
 
 Replace `/path/to/sample-library` with your ROOT directory, containing the
 `Claps folder` directory in this example.
-
 Replace this name with your actual
 folder name; the bank letter stays outside the quotes.
 
@@ -157,7 +149,6 @@ next `-m` / `--map`, so each group can have its own range, limit and start slot.
 
 To populate banks A-H using the default category mappings, first find the
 current Digitakt MIDI index with `./src/elektroid-cli ld`.
-
 Replace `INDEX` in
 the commands below.
 
@@ -189,12 +180,10 @@ The entire command is cancelled before any transfer, including to other banks.
 
 Use `--limit 256` to select up to 256 WAVs per default bank, or use explicit
 mappings and smaller ranges.
-
 A later starting slot requires a smaller limit.
 
 In default mode, a capacity error includes a copyable preview command using
 the actual resolved ROOT path and selected MIDI device index.
-
 Shell quoting preserves spaces and apostrophes.
 
 Explicit `--map`/`--folder` selections do not receive a default-bank command
@@ -227,7 +216,6 @@ Every invocation with a non-empty plan creates a new CSV report in
 `generated_sounds/` and prints its path.
 
 Use `--report PATH` to choose a file.
-
 An existing file is never overwritten when starting a run.
 
 For each bank/slot, the report records:
@@ -246,7 +234,6 @@ The name is the generated name, not a readback of the previously occupied slot.
 - Ctrl-C during a transfer records `interrupted` when possible.
 
 Successful retries retain the previous error for diagnosis.
-
 Updates replace
 the report atomically.
 
@@ -287,7 +274,6 @@ This places claps in A010–A019 and snares in D020–D029.
 - `--dry-run` is global.
 
 The default range is the whole folder and the default destination start is 1.
-
 A group's limit applies after its inclusive source range.
 
 Paths are relative to ROOT or absolute, with unrestricted directory names.
@@ -310,14 +296,12 @@ there is no implicit cowbell filter, even for a folder named `10 Percussion`.
 ```
 
 `--help` provides a compact option reference and two mapping examples.
-
 This
 document covers the full workflow, default banks and transfer safety.
 
 In help examples, `"Claps folder":D` and `"Snares folder":B` refer to
 directories: replace the quoted names with your actual folder names under
 ROOT, or absolute folder paths.
-
 Bank letters remain outside the quotes.
 
 ### List banks and tags
@@ -330,7 +314,6 @@ ROOT, MIDI access or file writes:
 ```
 
 Default assignments apply only without explicit mappings.
-
 With `--map`,
 any bank can receive any tag.
 
@@ -363,24 +346,20 @@ Known category folders retain their historical +Drive directories.
 Free-name
 folders use `mapped_<sanitized-name>-<path-hash>` directories, separating folders
 with identical basenames.
-
 Moving a folder changes its path hash and destination.
 
 Mapped sound names use the slot number and an ASCII tag label shortened to fit
 the 15-character sound-name limit.
-
 The report records the exact name and paths.
 
 Groups must not overlap destination slots, repeat source files, or collide
 on remote sample names.
-
 Capacity is checked for every group before MIDI.
 
 Options duplicated within a group or placed before its `--map` are rejected;
 a legacy global `--limit` cannot be combined with mappings.
 
 Do not mix `--map` with legacy `--folder`, `--bank` or `--start-slot`.
-
 The legacy syntax below remains supported for compatibility.
 
 ### Before execution
@@ -403,7 +382,6 @@ The total count and MIDI index follow the bank/file listing.
 
 The confirmation summarizes occupied and target slots without listing every
 slot.
-
 Non-contiguous ranges remain separate; no gaps are implied to be cleared.
 
 Add the global `--verbose` flag to display:
@@ -438,7 +416,6 @@ This option does not change the separate individual wrapper's device handling.
 ### Legacy selection syntax
 
 `ROOT` contains the category directories.
-
 No external sound model is needed.
 
 Preview the first ten snares without opening MIDI:
@@ -458,7 +435,6 @@ Ranks start at 1 after existing category filters and natural sorting of
 relative paths.
 
 A range is inclusive and must exist in full.
-
 `--limit` applies after the range, per selection.
 
 Source ranks may exceed 256 if an
@@ -468,13 +444,11 @@ explicit destination start makes the selected sounds fit in one bank.
 exactly one selection.
 
 Without placement options, source ranks keep their historical slots and category bank.
-
 Tags still follow the source folder.
 
 There is no bank rollover or automatic truncation.
 
 Thirty sounds from slot 250 are rejected before MIDI: only seven slots remain.
-
 Select at most seven
 sounds, or choose a start no greater than 227.
 
@@ -525,7 +499,6 @@ format.
 sample ID to the legacy hexadecimal wrapper format.
 
 Sample existence checks have no metadata-printing side effect.
-
 Normal download compression is unchanged.
 
 The session supports only SAMPLE_UL, META, DATA_CL, DATA_UL and
@@ -551,7 +524,6 @@ A successful transfer resets the consecutive-failure counter.
 
 Ten consecutive failures stop execution immediately, without starting or
 continuing the final retry pass.
-
 The counter carries over between passes.
 
 Otherwise, each failed transfer gets one final attempt, starting at its failed
@@ -560,7 +532,6 @@ phase.
 A confirmed clear is not repeated if the sound upload failed.
 
 The final summary lists completed, recovered, failed and unexecuted slots.
-
 Unresolved failures or unexecuted slots produce a nonzero exit status.
 
 There is no rollback: earlier writes remain, and a failed slot may be empty
