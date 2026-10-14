@@ -11,8 +11,8 @@ The device must expose the Elektron `sample` filesystem and support
 the metadata requests used by the connector.
 
 This feature has been validated on a Digitakt I running firmware 1.53.
-Compatibility with other Elektron models and firmware versions has
-not been established by this validation.
+**Compatibility with other Elektron models and firmware versions has
+not been established by this validation.**
 
 ## Find the device
 
@@ -89,7 +89,7 @@ metadata=$(elektroid-cli elektron:sample:sample-info \
 printf '%s\n' "$metadata"
 ```
 
-Check the exit status before processing the output.
+**Check the exit status before processing the output.**
 
 ## Error handling
 
@@ -109,7 +109,7 @@ For a missing sample, the CLI can report:
 Error: No such file or directory
 ```
 
-Errors are printed to standard error.
+Errors are printed to **standard error**.
 
 ## Protocol
 
@@ -144,7 +144,7 @@ elektroid-cli elektron:sample:sample-info-batch \
   'DEVICE_NUMBER:/PATH/TO/SAMPLE_2'
 ```
 
-All sample paths must refer to the same device.
+**All sample paths must refer to the same device.**
 
 ### Example
 

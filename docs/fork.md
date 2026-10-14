@@ -33,7 +33,7 @@ are overwritten: see the safety instructions below before any transfer.
 
 ### Build and requirements
 
-Install the dependencies in the [installation section](#dependencies) below,
+Install the dependencies in the [installation guide](installation.md#dependencies),
 then build the local CLI from the repository root:
 
 ```sh
@@ -121,8 +121,11 @@ including the cowbell filter.
 Filling all A–H banks requires 256 eligible WAVs
 per category; samples are not repeated and do not overflow into another bank.
 
-See the [Digitakt generator guide](docs/digitakt-generator-tags.md) for full
+See the [Digitakt generator guide](digitakt-generator-tags.md) for full
 bank usage, selection rules, sample destinations, CSV fields and retries, and
-the [untagged sound-export note](docs/elektron-sound-export.md) for the export fix.
+the [untagged sound-export note](elektron-sound-export.md) for the export fix.
+
+See the [sample metadata guide](elektron-sample-metadata.md) for single-sample
+and batch metadata commands.
 
 ## Upstream Elektroid

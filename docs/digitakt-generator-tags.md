@@ -47,8 +47,7 @@ the individual wrapper still has its legacy upload device handling.
 `dt-build-banks` replaces inherited tags with the explicit `--tag` of each
 `--map` group, independently of folder name and destination bank.
 
-Without
-`--map`, tags retain their historical source-category mapping: closed and open
+Without `--map`, tags retain their historical source-category mapping: closed and open
 hats use `HI-HAT`, and `10 Percussion` uses `PERCUSSION` with a cowbell filename
 filter. Legacy categories remain restricted; mapping folder names are free.
 
@@ -104,23 +103,26 @@ distinction is also explained in `--help`.
 
 ```sh
 ./dt-build-banks "/path/to/sample-library" \
-  -m "03 Claps:D" --tag CLAP -r 1:10 -f 1 -n
+  -m "Claps folder":D --tag CLAP -r 1:10 -f 1 -n
 ```
 
 Replace `/path/to/sample-library` with your ROOT directory, containing the
-`03 Claps` folder in this example.
+`Claps folder` directory in this example. Replace this name with your actual
+folder name; the bank letter stays outside the quotes.
 
 `-m` / `--map` can be repeated to combine several selections in one command;
 `--help` also includes this example:
 
 ```sh
 ./dt-build-banks "/path/to/sample-library" \
-  -m "03 Claps:D" --tag CLAP -r 1:10 -f 1 \
-  -m "02 Snares:B" --tag SNARE -l 10 -f 20 -n
+  -m "Claps folder":D --tag CLAP -r 1:10 -f 1 \
+  -m "Snares folder":B --tag SNARE -l 10 -f 20 -n
 ```
 
 Selection options `--tag`, `-r`, `-l` and `-f` apply to the preceding mapping until the
 next `-m` / `--map`, so each group can have its own range, limit and start slot.
+
+### Populate default banks A–H
 
 To populate banks A-H using the default category mappings, first find the
 current Digitakt MIDI index with `./src/elektroid-cli ld`. Replace `INDEX` in
@@ -131,7 +133,7 @@ snares to B, toms to C, claps to D, cowbells to E, closed hats to F, open hats
 to G and cymbals to H. Missing category folders are skipped. This is not an
 even distribution of all WAVs across banks; a category never overflows into
 the next bank. The CLI explains this mapping before building the default plan
-and also lists it in `--help`.
+and also lists it with `--list-banks`.
 
 If a selection exceeds capacity, the diagnostic names the source folder,
 eligible WAV count, selected count, destination bank and available slot range.
@@ -185,8 +187,10 @@ the audit trail; this does not undo device writes already made. Forced process
 termination can leave the latest device operation absent from the report.
 
 ```sh
-./dt-build-banks ROOT -m "03 Claps:D" --tag CLAP -n --report ./claps-plan.csv
+./dt-build-banks ROOT -m "03 Claps":D --tag CLAP -n --report ./claps-plan.csv
 ```
+
+### Mapping rules and examples
 
 `--folder` has no short alias. For example, preview without MIDI:
 
@@ -222,8 +226,8 @@ there is no implicit cowbell filter, even for a folder named `10 Percussion`.
 
 ```sh
 ./dt-build-banks "/path/to/sample-library" \
-  -m "My textures:H" --tag TEXTURE \
-  -m "Vintage effects:A" --tag "SOUND FX" -n
+  -m "My textures":H --tag TEXTURE \
+  -m "Vintage effects":A --tag "SOUND FX" -n
 ```
 
 `--help` provides a compact option reference and two mapping examples. This
@@ -232,6 +236,8 @@ document covers the full workflow, default banks and transfer safety.
 In help examples, `"Claps folder":D` and `"Snares folder":B` refer to
 directories: replace the quoted names with your actual folder names under
 ROOT, or absolute folder paths. Bank letters remain outside the quotes.
+
+### List banks and tags
 
 List banks A-H (256 slots each) and historical default mappings without
 ROOT, MIDI access or file writes:
@@ -251,13 +257,21 @@ List all tags without a sample root, MIDI connection or file writes:
 
 All 32 validated Digitakt I tags are supported (listed by `--list-tags`):
 
-KICK, SNARE, RIMSHOT, CLAP, TOM, PERCUSSION, HI-HAT, CYMBAL, COWBELL, SYNTH,
-BASS, LEAD, PAD, TEXTURE, CHORD, SOUND FX, ELECTRONIC, METALLIC, ACOUSTIC,
-ATMOSPHERIC, NOISY, GLITCH, HARD, SOFT, DARK, BRIGHT, VINTAGE, EPIC, FAIL,
-LOOP, MINE, FAVOURITE.
+| Tag | Tag | Tag | Tag |
+| --- | --- | --- | --- |
+| `KICK` | `SNARE` | `RIMSHOT` | `CLAP` |
+| `TOM` | `PERCUSSION` | `HI-HAT` | `CYMBAL` |
+| `COWBELL` | `SYNTH` | `BASS` | `LEAD` |
+| `PAD` | `TEXTURE` | `CHORD` | `SOUND FX` |
+| `ELECTRONIC` | `METALLIC` | `ACOUSTIC` | `ATMOSPHERIC` |
+| `NOISY` | `GLITCH` | `HARD` | `SOFT` |
+| `DARK` | `BRIGHT` | `VINTAGE` | `EPIC` |
+| `FAIL` | `LOOP` | `MINE` | `FAVOURITE` |
 
-Only one tag per group is supported; combinations have
-not been hardware-validated.
+**Only one tag per group is supported**; combinations have not been
+hardware-validated.
+
+### Sample destinations and collisions
 
 Known category folders retain their historical +Drive directories. Free-name
 folders use `mapped_<sanitized-name>-<path-hash>` directories, separating folders
@@ -275,11 +289,12 @@ a legacy global `--limit` cannot be combined with mappings.
 Do not mix `--map` with legacy `--folder`, `--bank` or `--start-slot`.
 The legacy syntax below remains supported for compatibility.
 
+### Before execution
+
 **Remove `--dry-run` only when ready to clear and replace the displayed slots
 after answering `YES`. There is no automatic backup.**
 
-The configured MIDI
-device index still needs to match the Digitakt pair.
+The configured MIDI device index still needs to match the Digitakt pair.
 
 ### Compact preview
 
@@ -346,8 +361,8 @@ The preview lists source paths/ranks, sound names, tags, slots and remote
 sample paths. **Only `--dry-run` guarantees no MIDI connection or hardware
 write. Without it, execution is the default.**
 
-The script checks that the
-configured MIDI index is the Digitakt pair, inventories target slots and
+The script checks that the configured MIDI index is the Digitakt pair,
+inventories target slots and
 requires the exact interactive answer `YES` before any write (`OUI` is also
 accepted for compatibility). Refusal or EOF
 cancels. Occupied slots are listed and will be replaced after confirmation.
@@ -361,9 +376,8 @@ Success means that sample metadata and clear/upload MIDI responses succeeded,
 not that tags, audio or all parameters were read back. Inspect tags and load
 representative sounds on tracks for a separate hardware check.
 
-On a transfer
-error, processing stops and reports completed,
-failed and pending slots; the failed slot may be empty or partially modified.
+Transfer errors are recorded and queued for the final retry pass described
+below. The failed slot may be empty or partially modified.
 
 `--execute`, `--clear-sounds` and `--clear-target-slots` are not accepted.
 No bank-wide clearing is performed. The individual `dt-make-sound` wrapper
