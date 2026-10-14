@@ -28,5 +28,5 @@ def create_default_sound():
             or data[-4:] != bytes.fromhex("aaa1daaa")
             or int.from_bytes(data[-12:-8], "big")
             != zlib.crc32(data[31:-12], 0xFFFFFFFF) & 0xFFFFFFFF):
-        raise RuntimeError("Paramètres sound intégrés invalides")
+        raise RuntimeError('Invalid built-in sound parameters')
     return bytearray(data)

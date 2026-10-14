@@ -25,9 +25,9 @@ def parse_range(value):
     try:
         first, last = (int(part) for part in value.split(':'))
     except ValueError:
-        raise argparse.ArgumentTypeError('Format attendu : DÉBUT:FIN') from None
+        raise argparse.ArgumentTypeError('Expected format: FIRST:LAST') from None
     if not 1 <= first <= last:
-        raise argparse.ArgumentTypeError('La plage doit respecter 1 <= début <= fin')
+        raise argparse.ArgumentTypeError('Range must satisfy 1 <= first <= last')
     return first, last
 
 
@@ -35,7 +35,7 @@ def category(name):
     for row in BANKS:
         if name in row[2]:
             return row
-    raise SystemExit(f'Catégorie de dossier non prise en charge : {name}')
+    raise SystemExit(f'Unsupported folder category: {name}')
 
 
 def parse_folder_spec(value):
@@ -43,12 +43,12 @@ def parse_folder_spec(value):
         try:
             name, first, last = value.rsplit(':', 2)
         except ValueError:
-            raise argparse.ArgumentTypeError('Format attendu : DOSSIER[:DÉBUT:FIN]') from None
+            raise argparse.ArgumentTypeError('Expected format: FOLDER[:FIRST:LAST]') from None
         first, last = parse_range(f'{first}:{last}')
     else:
         name, first, last = value, 1, None
     if not any(name in row[2] for row in BANKS):
-        raise argparse.ArgumentTypeError(f'Dossier inconnu : {name}')
+        raise argparse.ArgumentTypeError(f'Unknown folder: {name}')
     return name, first, last
 
 
@@ -56,10 +56,10 @@ def parse_map(value):
     try:
         path, bank = value.rsplit(':', 1)
     except ValueError:
-        raise argparse.ArgumentTypeError('Format attendu : DOSSIER:BANQUE') from None
+        raise argparse.ArgumentTypeError('Expected format: FOLDER:BANK') from None
     bank = bank.upper()
     if not path or len(bank) != 1 or bank not in 'ABCDEFGH':
-        raise argparse.ArgumentTypeError('Dossier requis et banque comprise entre A et H')
+        raise argparse.ArgumentTypeError('A folder and a bank between A and H are required')
     return {'path': path, 'bank': bank}
 
 
@@ -74,9 +74,9 @@ class MapOptionAction(argparse.Action):
             if self.dest == 'limit':
                 namespace.limit = values
                 return
-            parser.error(f'{option_string} doit suivre un --map')
+            parser.error(f'{option_string} must follow --map')
         if self.dest in namespace.maps[-1]:
-            parser.error(f'{option_string} répété dans le même --map')
+            parser.error(f'{option_string} repeated in the same --map group')
         namespace.maps[-1][self.dest] = values
 
 
@@ -97,11 +97,11 @@ def validate_jobs(jobs):
         source = job['wav'].resolve()
         remote = (job['remote'], job['remote_name'].casefold())
         if slot in slots:
-            raise SystemExit(f"Collision de destination : {job['bank']}{job['slot']:03d}")
+            raise SystemExit(f"Destination collision: {job['bank']}{job['slot']:03d}")
         if source in sources:
-            raise SystemExit(f'Sélections source qui se chevauchent : {source}')
+            raise SystemExit(f'Overlapping source selections: {source}')
         if remote in names:
-            raise SystemExit(f'Collision de nom +Drive : {remote}')
+            raise SystemExit(f'+Drive name collision: {remote}')
         slots.add(slot)
         sources.add(source)
         names.add(remote)
@@ -110,39 +110,39 @@ def validate_jobs(jobs):
 def plan_folder(folder, first, last, limit, bank=None, start=None):
     default_bank, label, _, remote = category(folder.name)
     if not folder.is_dir():
-        raise SystemExit(f'Dossier sélectionné introuvable: {folder}')
+        raise SystemExit(f'Selected folder not found: {folder}')
     bank = (bank or default_bank).upper()
     if len(bank) != 1 or bank not in 'ABCDEFGH':
-        raise SystemExit('La banque doit être comprise entre A et H')
+        raise SystemExit('Bank must be between A and H')
     if limit is not None and not 1 <= limit <= 256:
-        raise SystemExit('--limit doit être compris entre 1 et 256')
+        raise SystemExit('--limit must be between 1 and 256')
     start = first if start is None else start
     if not 1 <= start <= 256:
-        raise SystemExit('Le premier slot doit être compris entre 1 et 256')
+        raise SystemExit('First destination slot must be between 1 and 256')
     files = inventory(folder)
     if not files:
-        raise SystemExit(f'Aucun WAV sélectionnable: {folder}')
+        raise SystemExit(f'No selectable WAV files: {folder}')
     if first < 1 or (last is not None and last < first):
-        raise SystemExit('Plage source invalide')
+        raise SystemExit('Invalid source range')
     if first > len(files) or (last is not None and last > len(files)):
-        raise SystemExit(f'Plage inexistante dans {folder}: {len(files)} samples disponibles')
+        raise SystemExit(f'Range unavailable in {folder}: {len(files)} samples available')
     files = files[first - 1:last]
     if limit is not None:
         files = files[:limit]
     available = 257 - start
     if len(files) > available:
-        raise SystemExit(f'{len(files)} sounds demandés, {available} slots disponibles '
-                         f'({start}–256). Choisissez un slot de départ ≤ '
-                         f'{257 - len(files)} ou réduisez la sélection à {available} sounds.')
+        raise SystemExit(f'{len(files)} sounds requested, {available} slots available '
+                         f'({start}–256). Choose a starting slot ≤ '
+                         f'{257 - len(files)} or reduce the selection to {available} sounds.')
     jobs = []
     for offset, wav in enumerate(files):
         name = wav.stem[:32].rstrip(' .')
         if not name or any(c in name for c in '\t\r\n'):
-            raise SystemExit(f'Nom +Drive invalide: {wav.name}')
+            raise SystemExit(f'Invalid +Drive name: {wav.name}')
         try:
             wav.stem.encode('cp1252')
         except UnicodeEncodeError:
-            raise SystemExit(f'Nom non CP1252: {wav.name}') from None
+            raise SystemExit(f'Name cannot be encoded as CP1252: {wav.name}') from None
         jobs.append({'bank': bank, 'label': label, 'source_folder': folder.name,
                      'remote': remote, 'slot': start + offset, 'source_rank': first + offset,
                      'wav': wav, 'remote_name': name})
@@ -151,7 +151,7 @@ def plan_folder(folder, first, last, limit, bank=None, start=None):
 
 def build_plan(root, limit, folders=None, bank=None, start_slot=None):
     if (bank is not None or start_slot is not None) and (not folders or len(folders) != 1):
-        raise SystemExit('Le placement explicite nécessite exactement un --folder')
+        raise SystemExit('Explicit placement requires exactly one --folder')
     selections = folders if folders else [(row[2][0], 1, None) for row in BANKS
                                          if (root / row[2][0]).is_dir()]
     jobs, summary = [], []

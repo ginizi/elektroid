@@ -6,7 +6,7 @@ BASE="$(cd "$(dirname "$0")" && pwd)"
 CLI="$BASE/src/elektroid-cli"
 
 if [ "$#" -ne 1 ]; then
-    echo "Usage: $0 '1:/chemin/vers/sample'" >&2
+    echo "Usage: $0 '1:/path/to/sample'" >&2
     exit 2
 fi
 

@@ -29,7 +29,7 @@ HASH="$(
 )"
 
 if [ -z "$ID" ] || [ -z "$SIZE" ] || [ -z "$HASH" ]; then
-    echo "Erreur: métadonnées incomplètes:" >&2
+    echo "Error: incomplete metadata:" >&2
     printf '%s\n' "$LINE" >&2
     exit 1
 fi

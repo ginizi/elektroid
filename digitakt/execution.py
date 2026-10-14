@@ -24,7 +24,7 @@ def parse_metadata(output):
     match = re.search(r'SAMPLE_INFO id=([0-9A-Fa-f]{8}) size=([0-9]+) '
                       r'hash=([0-9A-Fa-f]{8})', output)
     if not match:
-        raise RuntimeError(f'SAMPLE_INFO introuvable:\n{output}')
+        raise RuntimeError(f'SAMPLE_INFO not found:\n{output}')
     return int(match[1], 16), int(match[2]), int(match[3], 16)
 
 
@@ -52,12 +52,12 @@ def execute_jobs(jobs, config, runner=cmd, session_factory=DTSession):
                 process_job(job, config, session, runner)
             except Exception as exc:
                 completed = format_slot_ranges(f"{j['bank']}{j['slot']:03d}"
-                                               for j in jobs[:position - 1]) or 'aucun'
+                                               for j in jobs[:position - 1]) or 'none'
                 pending = format_slot_ranges(f"{j['bank']}{j['slot']:03d}"
-                                             for j in jobs[position:]) or 'aucun'
-                raise SystemExit(f"Arrêt sur {job['bank']}{job['slot']:03d}: {exc}. "
-                                 f'Terminés : {completed}. Non exécutés : {pending}. '
-                                 'Le slot en erreur peut avoir été partiellement modifié.') from exc
+                                             for j in jobs[position:]) or 'none'
+                raise SystemExit(f"Stopped at {job['bank']}{job['slot']:03d}: {exc}. "
+                                 f'Completed: {completed}. Not executed: {pending}. '
+                                 'The failed slot may have been partially modified.') from exc
             durations.append(time.monotonic() - start)
             print_progress(position, len(jobs), job, durations)
-    print(f'TERMINÉ — {len(jobs)} réussites, 0 échec, {sum(durations):.2f}s')
+    print(f'DONE — {len(jobs)} successful, 0 failed, {sum(durations):.2f}s')

@@ -24,14 +24,14 @@ FOLDER_TAGS = {
 def generate_sound(bank, slot, name, sample_id, sample_size, sample_hash, tag):
     """Return a sound without I/O; replace all variable fields before CRC."""
     if len(bank) != 1 or bank not in 'ABCDEFGH':
-        raise RuntimeError(f'Banque invalide: {bank}')
+        raise RuntimeError(f'Invalid bank: {bank}')
     if not 1 <= slot <= 256:
-        raise RuntimeError(f'Slot invalide: {slot}')
+        raise RuntimeError(f'Invalid slot: {slot}')
     if tag not in TAG_VALUES:
-        raise RuntimeError(f'Tag inconnu: {tag}')
+        raise RuntimeError(f'Unknown tag: {tag}')
     encoded = name.encode('ascii')
     if len(encoded) > 15:
-        raise RuntimeError(f'Nom Sound trop long: {name}')
+        raise RuntimeError(f'Sound name too long: {name}')
     data = create_default_sound()
     index = (ord(bank) - ord('A')) * 256 + slot - 1
     data[21:25] = index.to_bytes(4, 'big')
@@ -45,6 +45,6 @@ def generate_sound(bank, slot, name, sample_id, sample_size, sample_hash, tag):
 
 def make_sound_data(output, bank, slot, name, sample_id, sample_size, sample_hash, source_folder):
     if source_folder not in FOLDER_TAGS:
-        raise RuntimeError(f'Aucune catégorie vérifiée pour: {source_folder}')
+        raise RuntimeError(f'No verified category for: {source_folder}')
     tag = TAG_NAMES[FOLDER_TAGS[source_folder]]
     Path(output).write_bytes(generate_sound(bank, slot, name, sample_id, sample_size, sample_hash, tag))

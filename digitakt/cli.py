@@ -22,27 +22,27 @@ def check_destinations(jobs, config=None):
 
 
 def parse_args(argv=None):
-    parser = argparse.ArgumentParser(description='Construction des Sound Banks Digitakt I')
-    parser.add_argument('root', type=Path, help='racine des dossiers de samples')
-    parser.add_argument('--dry-run', action='store_true', help='aperçu sans MIDI ni écriture')
-    parser.add_argument('--limit', type=int, action=MapOptionAction, help='maximum par sélection')
+    parser = argparse.ArgumentParser(description='Build Digitakt I sound banks')
+    parser.add_argument('root', type=Path, help='root directory containing sample folders')
+    parser.add_argument('--dry-run', action='store_true', help='preview without MIDI or writes')
+    parser.add_argument('--limit', type=int, action=MapOptionAction, help='maximum per selection')
     parser.add_argument('--folder', action='append', type=parse_folder_spec,
-                        metavar='DOSSIER[:DÉBUT:FIN]', help='sélection historique, répétable')
-    parser.add_argument('--bank', help='banque A–H (un seul --folder)')
-    parser.add_argument('--start-slot', type=int, help='premier slot (un seul --folder)')
+                        metavar='FOLDER[:FIRST:LAST]', help='legacy selection, repeatable')
+    parser.add_argument('--bank', help='bank A–H (one --folder only)')
+    parser.add_argument('--start-slot', type=int, help='first destination slot (one --folder only)')
     parser.add_argument('--map', dest='maps', type=parse_map, action=MapAction,
-                        help='DOSSIER:BANQUE ; ouvre un groupe')
+                        help='FOLDER:BANK; starts a selection group')
     parser.add_argument('--range', type=parse_range, action=MapOptionAction,
-                        help='DÉBUT:FIN du dernier --map')
+                        help='FIRST:LAST source range for the preceding --map')
     parser.add_argument('--from-slot', type=int, action=MapOptionAction,
-                        help='premier slot du dernier --map, défaut 1')
-    parser.add_argument('--device', type=int, default=int(DEVICE), help='indice MIDI, défaut 1')
-    parser.add_argument('--verbose', action='store_true', help='détail des fichiers')
+                        help='first destination slot for the preceding --map, default 1')
+    parser.add_argument('--device', type=int, default=int(DEVICE), help='MIDI device index, default 1')
+    parser.add_argument('--verbose', action='store_true', help='show individual files')
     args = parser.parse_args(argv)
     if args.device < 0:
-        parser.error('--device doit être un entier non négatif')
+        parser.error('--device must be a non-negative integer')
     if args.maps and (args.folder or args.bank or args.start_slot is not None or args.limit is not None):
-        parser.error('--map ne se mélange pas avec --folder, --bank, --start-slot ou une limite globale')
+        parser.error('--map cannot be combined with --folder, --bank, --start-slot or a global limit')
     return args
 
 
@@ -50,22 +50,22 @@ def main(argv=None):
     args = parse_args(argv)
     root = args.root.expanduser().resolve()
     if not root.is_dir():
-        raise SystemExit(f'Racine introuvable: {root}')
+        raise SystemExit(f'Root directory not found: {root}')
     create_default_sound()
     if not CLI.is_file():
-        raise SystemExit(f'elektroid-cli introuvable: {CLI}')
+        raise SystemExit(f'elektroid-cli not found: {CLI}')
     jobs, summary = (build_maps_plan(root, args.maps) if args.maps else
                      build_plan(root, args.limit, args.folder, args.bank, args.start_slot))
     config = Config(CLI, str(args.device), BASE / 'generated_sounds')
     print_plan(jobs, summary, args.verbose, config.device)
     if not jobs:
-        raise SystemExit('Aucun WAV trouvé.')
+        raise SystemExit('No WAV files found.')
     if args.dry_run:
-        print('\nAucun upload effectué. Relance sans --dry-run pour exécuter après confirmation.')
+        print('\nNo uploads performed. Remove --dry-run to execute after confirmation.')
         return
     verify_device(config, runner=cmd)
     occupied = check_destinations(jobs, config)
     confirm_execution(jobs, occupied)
-    print('Démarrage dans 3 secondes (Ctrl-C pour annuler)...')
+    print('Starting in 3 seconds (Ctrl-C to cancel)...')
     time.sleep(3)
     execute_jobs(jobs, config, runner=cmd, session_factory=DTSession)
