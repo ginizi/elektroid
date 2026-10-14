@@ -1,0 +1,281 @@
+#!/bin/bash
+set -euo pipefail
+
+timer_now() {
+    python3 -c 'import time; print(time.monotonic())'
+}
+
+timer_diff() {
+    python3 - "$1" "$2" <<'PYTIME'
+import sys
+print(f"{float(sys.argv[2]) - float(sys.argv[1]):.6f}")
+PYTIME
+}
+
+BASE="$(cd "$(dirname "$0")" && pwd)"
+CLI="$BASE/src/elektroid-cli"
+META="$BASE/dt-sample-meta"
+
+usage() {
+    echo "Usage:"
+    echo "  $0 SAMPLE_PATH BANK SLOT SOUND_NAME TAG [--upload]"
+    echo
+    echo "Exemple:"
+    echo "  $0 '1:/01_KICKS/0017-Ace Tone Rhythm Ace - KICK1' \\"
+    echo "    A 7 07_KICK KICK --upload"
+    echo "TAG doit être un nom exact du Digitakt I (ex. KICK, SNARE, HI-HAT)."
+    exit 2
+}
+
+[ "$#" -ge 5 ] && [ "$#" -le 6 ] || usage
+
+SAMPLE_PATH="$1"
+BANK="$(printf '%s' "$2" | tr '[:lower:]' '[:upper:]')"
+SLOT="$3"
+SOUND_NAME="$4"
+TAG="$5"
+MODE="${6:-}"
+
+[ -x "$CLI" ] || {
+    echo "Erreur: elektroid-cli introuvable: $CLI" >&2
+    exit 1
+}
+
+[ -x "$META" ] || {
+    echo "Erreur: dt-sample-meta introuvable: $META" >&2
+    exit 1
+}
+
+case "$BANK" in
+    A|B|C|D|E|F|G|H) ;;
+    *)
+        echo "Erreur: banque invalide: $BANK (A-H)" >&2
+        exit 1
+        ;;
+esac
+
+case "$SLOT" in
+    ''|*[!0-9]*)
+        echo "Erreur: slot invalide: $SLOT" >&2
+        exit 1
+        ;;
+esac
+
+if [ "$SLOT" -lt 1 ] || [ "$SLOT" -gt 256 ]; then
+    echo "Erreur: slot doit être compris entre 1 et 256" >&2
+    exit 1
+fi
+
+if [ -n "$MODE" ] && [ "$MODE" != "--upload" ]; then
+    echo "Erreur: option inconnue: $MODE" >&2
+    exit 1
+fi
+
+echo "Lecture des métadonnées du sample..."
+
+META_T0="$(timer_now)"
+META_OUT="$("$META" "$SAMPLE_PATH")"
+META_T1="$(timer_now)"
+META_SECONDS="$(timer_diff "$META_T0" "$META_T1")"
+
+ID="$(printf '%s\n' "$META_OUT" |
+    sed -n 's/^ID=\([0-9A-Fa-f]*\)$/\1/p')"
+
+SIZE="$(printf '%s\n' "$META_OUT" |
+    sed -n 's/^SIZE=\([0-9]*\)$/\1/p')"
+
+HASH="$(printf '%s\n' "$META_OUT" |
+    sed -n 's/^HASH=\([0-9A-Fa-f]*\)$/\1/p')"
+
+if [ -z "$ID" ] || [ -z "$SIZE" ] || [ -z "$HASH" ]; then
+    echo "Erreur: métadonnées incomplètes:" >&2
+    printf '%s\n' "$META_OUT" >&2
+    exit 1
+fi
+
+SLOT3="$(printf '%03d' "$SLOT")"
+OUT="${BANK}${SLOT3}_${SOUND_NAME}.data"
+
+GEN_T0="$(timer_now)"
+
+python3 - \
+    "$BASE" \
+    "$OUT" \
+    "$BANK" \
+    "$SLOT" \
+    "$SOUND_NAME" \
+    "$ID" \
+    "$SIZE" \
+    "$HASH" \
+    "$TAG" <<'PY'
+import sys
+import zlib
+from pathlib import Path
+
+base, out_path, bank, slot_s, name_s, id_s, size_s, hash_s, tag = sys.argv[1:]
+sys.path.insert(0, base)
+from dt_sound_defaults import create_default_sound
+
+# Bit positions verified individually on Digitakt I firmware 1.53.
+tags = [
+    "KICK", "SNARE", "RIMSHOT", "CLAP", "TOM", "PERCUSSION", "HI-HAT",
+    "CYMBAL", "COWBELL", "SYNTH", "BASS", "LEAD", "PAD", "TEXTURE",
+    "CHORD", "SOUND FX", "ELECTRONIC", "METALLIC", "ACOUSTIC",
+    "ATMOSPHERIC", "NOISY", "GLITCH", "HARD", "SOFT", "DARK", "BRIGHT",
+    "VINTAGE", "EPIC", "FAIL", "LOOP", "MINE", "FAVOURITE",
+]
+if tag not in tags:
+    raise SystemExit(f"Erreur: tag Digitakt I inconnu: {tag}")
+tag_value = 1 << tags.index(tag)
+
+slot = int(slot_s)
+sample_id = int(id_s, 16)
+sample_size = int(size_s)
+sample_hash = int(hash_s, 16)
+
+data = create_default_sound()
+
+# ---- Validation du template décompressé ----
+
+if len(data) != 203:
+    raise SystemExit(
+        f"Erreur: template de {len(data)} octets; 203 attendus"
+    )
+
+if data[0:4] != bytes.fromhex("ac11d303"):
+    raise SystemExit("Erreur: magic header incorrect")
+
+if data[29] != 0:
+    raise SystemExit(
+        "Erreur: le template est compressé (is_compressed != 0)"
+    )
+
+if data[30] != 12:
+    raise SystemExit(
+        f"Erreur: footer_size={data[30]}, 12 attendu"
+    )
+
+payload_size = int.from_bytes(data[25:29], "big")
+
+if payload_size != 160:
+    raise SystemExit(
+        f"Erreur: payload_size={payload_size}, 160 attendu"
+    )
+
+if data[-4:] != bytes.fromhex("aaa1daaa"):
+    raise SystemExit("Erreur: magic footer incorrect")
+
+footer_content_size = int.from_bytes(data[-8:-4], "big")
+
+if footer_content_size != 160:
+    raise SystemExit(
+        f"Erreur: footer content_size={footer_content_size}, 160 attendu"
+    )
+
+# ---- Nom ----
+
+try:
+    name = name_s.encode("ascii")
+except UnicodeEncodeError:
+    raise SystemExit("Erreur: SOUND_NAME doit être ASCII")
+
+if len(name) > 15:
+    raise SystemExit(
+        "Erreur: SOUND_NAME doit faire au maximum 15 caractères"
+    )
+
+# ---- Index global du Sound ----
+#
+# A001 = 0
+# A256 = 255
+# B001 = 256
+# ...
+# H256 = 2047
+
+bank_index = ord(bank) - ord("A")
+file_index = bank_index * 256 + (slot - 1)
+
+# elektron_data_header.file_index
+data[21:25] = file_index.to_bytes(4, "big")
+
+# ---- Nom du Sound : champ de 16 octets ----
+
+data[43:59] = name + b"\x00" * (16 - len(name))
+
+# ---- Référence sample ----
+
+# Replace all inherited tags. Payload offset 8, after the 31-byte header.
+data[39:43] = tag_value.to_bytes(4, "big")
+
+ref1 = sample_id
+size_plus_16 = sample_size + 16
+ref2 = sample_id + 0x28B8
+
+data[0xA3:0xA7] = ref1.to_bytes(4, "big")
+data[0xA7:0xAB] = sample_hash.to_bytes(4, "big")
+data[0xAB:0xAF] = size_plus_16.to_bytes(4, "big")
+data[0xAF:0xB3] = ref2.to_bytes(4, "big")
+
+# ---- CRC32 ----
+
+crc_offset = len(data) - 12
+
+crc = (
+    zlib.crc32(
+        data[31:crc_offset],
+        0xFFFFFFFF
+    )
+    & 0xFFFFFFFF
+)
+
+data[crc_offset:crc_offset + 4] = crc.to_bytes(4, "big")
+
+Path(out_path).write_bytes(data)
+
+sample_block = data[0xA3:0xB3].hex().upper()
+
+print()
+print("Sound généré")
+print("-------------------------------")
+print(f"Fichier       : {out_path}")
+print(f"Banque        : {bank}")
+print(f"Slot          : {slot:03d}")
+print(f"File index    : {file_index}")
+print(f"Nom           : {name_s}")
+print(f"Tag           : {tag} ({tag_value:08X})")
+print(f"Sample ID     : {sample_id:08X}")
+print(f"Sample hash   : {sample_hash:08X}")
+print(f"Sample size   : {sample_size}")
+print(f"Size + 16     : {size_plus_16:08X}")
+print(f"Ref2          : {ref2:08X}")
+print(f"Bloc sample   : {sample_block}")
+print(f"CRC32         : {crc:08X}")
+print("-------------------------------")
+PY
+
+GEN_T1="$(timer_now)"
+GEN_SECONDS="$(timer_diff "$GEN_T0" "$GEN_T1")"
+UPLOAD_SECONDS="0.000000"
+
+if [ "$MODE" = "--upload" ]; then
+    echo
+    echo "Upload vers $BANK$(printf '%03d' "$SLOT")..."
+    UPLOAD_T0="$(timer_now)"
+
+    "$CLI" elektron:data:ul \
+        "$OUT" \
+        "1:/soundbanks/$BANK/$SLOT"
+
+    UPLOAD_T1="$(timer_now)"
+    UPLOAD_SECONDS="$(timer_diff "$UPLOAD_T0" "$UPLOAD_T1")"
+
+    echo
+    echo "Upload terminé."
+else
+    echo
+    echo "Pas d'upload (utiliser --upload pour envoyer au Digitakt)."
+fi
+
+echo "__TIMING_META__=$META_SECONDS"
+echo "__TIMING_GENERATE__=$GEN_SECONDS"
+echo "__TIMING_SOUND_UPLOAD__=$UPLOAD_SECONDS"

@@ -10,3 +10,4 @@ format:
 	indent src/*.[ch] src/connectors/*.[ch] src/mactions/*.[ch] test/*.[ch]
 
 .PHONY: format
+EXTRA_DIST = dt-build-banks dt-make-sound dt_sound_defaults.py dt-sample-meta dt-sample-info
