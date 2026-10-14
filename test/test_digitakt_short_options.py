@@ -1,5 +1,6 @@
 import io
 import sys
+import shlex
 from pathlib import Path
 import tempfile
 import unittest
@@ -11,6 +12,29 @@ from digitakt import cli
 
 
 class ShortOptionsTest(unittest.TestCase):
+    def test_capacity_suggestion_uses_real_root_and_device(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory) / "User's sample library"
+            folder = root / '01 Kicks'
+            folder.mkdir(parents=True)
+            binary = root / 'cli'
+            binary.touch()
+            files = [folder / f'kick{i}.wav' for i in range(300)]
+            for selection in ([], ['-m', '01 Kicks:A']):
+                with self.subTest(selection=selection), patch.object(cli, 'CLI', binary), \
+                        patch('digitakt.planning.inventory', return_value=files), \
+                        redirect_stdout(io.StringIO()), self.assertRaises(SystemExit) as error:
+                    cli.main([str(root), '-d', '13', *selection])
+                text = str(error.exception)
+                self.assertNotIn('/path/to/sample-library', text)
+                if not selection:
+                    command = text.splitlines()[-1].strip()
+                    self.assertEqual(shlex.split(command),
+                                     ['./dt-build-banks', str(root.resolve()),
+                                      '--limit', '256', '--device', '13', '-n'])
+                else:
+                    self.assertNotIn('Preview up to 256', text)
+
     def test_default_capacity_error_explains_folder_bank_and_cancellation(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
