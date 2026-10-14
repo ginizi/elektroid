@@ -29,17 +29,29 @@ def parse_metadata(output):
 
 
 def process_job(job, config, session, runner):
+    timings = {}
     name = f"{job['slot']:02d}_{job['label']}"
     remote = f"/{job['remote']}/{job['remote_name']}"
     upload_wav = config.work / '_upload_clean' / f"{job['remote_name']}.wav"
+    start = time.monotonic()
     runner(['ffmpeg', '-y', '-v', 'error', '-i', job['wav'],
             '-map_metadata', '-1', '-c:a', 'pcm_s16le', upload_wav])
+    timings['ffmpeg'] = time.monotonic() - start
+    start = time.monotonic()
     session.command('SAMPLE_UL', upload_wav, f"/{job['remote']}")
+    timings['sample_upload'] = time.monotonic() - start
+    start = time.monotonic()
     sample_id, size, sample_hash = parse_metadata(session.command('META', remote))
+    timings['metadata'] = time.monotonic() - start
+    start = time.monotonic()
     sound_file = config.work / f"{job['bank']}{job['slot']:03d}_{name}.data"
     make_sound_data(sound_file, job['bank'], job['slot'], name,
                     sample_id, size, sample_hash, job['source_folder'])
+    timings['generate'] = time.monotonic() - start
+    start = time.monotonic()
     replace_sound(session, sound_file, job['bank'], job['slot'])
+    timings['sound_upload'] = time.monotonic() - start
+    return timings
 
 
 def execute_jobs(jobs, config, runner=cmd, session_factory=DTSession):
@@ -49,7 +61,7 @@ def execute_jobs(jobs, config, runner=cmd, session_factory=DTSession):
         for position, job in enumerate(jobs, 1):
             start = time.monotonic()
             try:
-                process_job(job, config, session, runner)
+                timings = process_job(job, config, session, runner)
             except Exception as exc:
                 completed = format_slot_ranges(f"{j['bank']}{j['slot']:03d}"
                                                for j in jobs[:position - 1]) or 'none'
@@ -59,5 +71,5 @@ def execute_jobs(jobs, config, runner=cmd, session_factory=DTSession):
                                  f'Completed: {completed}. Not executed: {pending}. '
                                  'The failed slot may have been partially modified.') from exc
             durations.append(time.monotonic() - start)
-            print_progress(position, len(jobs), job, durations)
+            print_progress(position, len(jobs), job, durations, timings)
     print(f'DONE — {len(jobs)} successful, 0 failed, {sum(durations):.2f}s')

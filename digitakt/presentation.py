@@ -1,6 +1,8 @@
 """Console presentation, independent of MIDI and selection logic."""
 
 from .sound import FOLDER_TAGS, TAG_NAMES
+from datetime import datetime, timedelta
+import sys
 
 
 def format_slot_ranges(slots):
@@ -53,8 +55,34 @@ def confirm_execution(jobs, occupied):
         raise SystemExit('Cancelled: no writes performed')
 
 
-def print_progress(position, total, job, durations):
+def format_duration(seconds):
+    seconds = max(0, round(seconds))
+    hours, remainder = divmod(seconds, 3600)
+    minutes, seconds = divmod(remainder, 60)
+    return f'{hours:02d}:{minutes:02d}:{seconds:02d}'
+
+
+def print_progress(position, total, job, durations, timings):
     elapsed = sum(durations)
     remaining = elapsed / position * (total - position)
-    print(f"[{position}/{total}] {job['bank']}{job['slot']:03d} OK — "
-          f'{durations[-1]:.2f}s; estimated remaining {remaining / 60:.1f} min', flush=True)
+    finish = datetime.now() + timedelta(seconds=remaining)
+    filled = 30 * position // total
+    bar = '#' * filled + '-' * (30 - filled)
+    if sys.stdout.isatty():
+        print('\033[2J\033[H', end='')
+    print('=' * 72)
+    print(f"[{position}/{total}] {job['bank']}{job['slot']:03d}  {job['wav'].name}")
+    print(f'Progress: [{bar}] {100 * position / total:.1f}%')
+    print(f'Successful: {position}  Failed: 0  Status: OK\n')
+    print('Last sound timings')
+    for label, key in (('Conversion', 'ffmpeg'), ('WAV upload', 'sample_upload'),
+                       ('Metadata', 'metadata'), ('Generation', 'generate'),
+                       ('Clear + sound', 'sound_upload')):
+        value = timings.get(key)
+        text = '---' if value is None else f'{value:.2f} s'
+        print(f'{label:<17}: {text}')
+    print(f'Measured total   : {sum(timings.values()):.2f} s\n')
+    print(f'Last sound       : {format_duration(durations[-1])}')
+    print(f'Elapsed          : {format_duration(elapsed)}')
+    print(f'Remaining        : ~{format_duration(remaining)}')
+    print(f'Estimated finish : {finish:%H:%M:%S}', flush=True)
