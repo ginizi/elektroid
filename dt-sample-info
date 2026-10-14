@@ -1,0 +1,20 @@
+#!/bin/bash
+
+set -eu
+
+BASE="$(cd "$(dirname "$0")" && pwd)"
+CLI="$BASE/src/elektroid-cli"
+
+if [ "$#" -ne 1 ]; then
+    echo "Usage: $0 '1:/path/to/sample'" >&2
+    exit 2
+fi
+
+OUTPUT="$("$CLI" elektron:sample:sample-info "$1")"
+python3 - "$OUTPUT" <<'PY'
+import sys
+
+values = dict(line.split("=", 1) for line in sys.argv[1].splitlines())
+print(f"SAMPLE_INFO id={int(values['id']):08x} "
+      f"size={int(values['size'])} hash={int(values['hash'], 16):08x}")
+PY

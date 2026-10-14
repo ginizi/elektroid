@@ -1,0 +1,5 @@
+#!/bin/bash
+set -euo pipefail
+BASE="$(cd "$(dirname "$0")" && pwd)"
+export PYTHONPATH="$BASE${PYTHONPATH:+:$PYTHONPATH}"
+exec python3 -m digitakt.single "$@"

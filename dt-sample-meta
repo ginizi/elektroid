@@ -1,0 +1,42 @@
+#!/bin/bash
+set -euo pipefail
+
+BASE="$(cd "$(dirname "$0")" && pwd)"
+INFO="$BASE/dt-sample-info"
+
+if [ "$#" -ne 1 ]; then
+    echo "Usage: $0 SAMPLE_PATH" >&2
+    exit 2
+fi
+
+SAMPLE_PATH="$1"
+
+LINE="$("$INFO" "$SAMPLE_PATH")"
+
+ID="$(
+    printf '%s\n' "$LINE" |
+    sed -n 's/.*id=\([0-9A-Fa-f]*\).*/\1/p'
+)"
+
+SIZE="$(
+    printf '%s\n' "$LINE" |
+    sed -n 's/.*size=\([0-9]*\).*/\1/p'
+)"
+
+HASH="$(
+    printf '%s\n' "$LINE" |
+    sed -n 's/.*hash=\([0-9A-Fa-f]*\).*/\1/p'
+)"
+
+if [ -z "$ID" ] || [ -z "$SIZE" ] || [ -z "$HASH" ]; then
+    echo "Error: incomplete metadata:" >&2
+    printf '%s\n' "$LINE" >&2
+    exit 1
+fi
+
+ID="$(printf '%s' "$ID" | tr '[:lower:]' '[:upper:]')"
+HASH="$(printf '%s' "$HASH" | tr '[:lower:]' '[:upper:]')"
+
+echo "ID=$ID"
+echo "SIZE=$SIZE"
+echo "HASH=$HASH"
