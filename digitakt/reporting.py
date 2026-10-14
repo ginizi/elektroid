@@ -4,7 +4,7 @@ import csv
 import os
 from pathlib import Path
 import tempfile
-from .sound import FOLDER_TAGS, TAG_NAMES
+from .sound import job_tag
 
 
 def sound_name(job):
@@ -21,7 +21,7 @@ class TransferReport:
                 slot=f"{job['bank']}{job['slot']:03d}", sound_name=name,
                 source_path=str(job['wav'].resolve()),
                 sample_path=f"/{job['remote']}/{job['remote_name']}",
-                tag=TAG_NAMES[FOLDER_TAGS[job['source_folder']]],
+                tag=job_tag(job),
                 sound_path=str((work / f"{job['bank']}{job['slot']:03d}_{name}.data").resolve()),
                 status='planned' if dry_run else 'not_executed',
                 attempts=0, phase='', last_error=''))

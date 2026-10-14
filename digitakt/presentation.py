@@ -1,6 +1,6 @@
 """Console presentation, independent of MIDI and selection logic."""
 
-from .sound import FOLDER_TAGS, TAG_NAMES
+from .sound import job_tag
 from datetime import datetime, timedelta
 import sys
 
@@ -31,7 +31,7 @@ def print_plan(jobs, summary, verbose=False, device='1'):
         print(f'\nBANK {bank} — slots {slots} — {len(bank_jobs)} sounds')
         print(f"{'SLOT':<7}{'TAG':<13}SOURCE FILE")
         for job in bank_jobs:
-            tag = TAG_NAMES[FOLDER_TAGS[job['source_folder']]]
+            tag = job_tag(job)
             print(f"{bank}{job['slot']:03d}   {tag:<13}{job['wav'].name}")
             if verbose:
                 print(f"       Source: {job['wav']} (rank {job['source_rank']})")

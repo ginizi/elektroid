@@ -2,7 +2,7 @@
 
 import re
 import time
-from .sound import make_sound_data
+from .sound import make_sound_data, job_tag
 from .transport import cmd, DTSession
 from .presentation import format_slot_ranges, print_progress
 from .reporting import sound_name
@@ -47,7 +47,7 @@ def process_job(job, config, session, runner, state=None):
         ('sample_upload', lambda: session.command('SAMPLE_UL', upload_wav, f"/{job['remote']}")),
         ('metadata', metadata),
         ('generate', lambda: make_sound_data(sound_file, job['bank'], job['slot'], name,
-                                             *state['metadata'], job['source_folder'])),
+                                             *state['metadata'], job['source_folder'], tag=job_tag(job))),
         ('clear', lambda: session.command('DATA_CL', path)),
         ('sound_upload', lambda: session.command('DATA_UL', sound_file, path)),
     ]

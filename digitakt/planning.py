@@ -3,6 +3,8 @@
 import argparse
 from pathlib import Path
 import re
+import hashlib
+from .sound import TAG_VALUES, TAG_NAMES, FOLDER_TAGS
 
 BANKS = (
     ('A', 'KICK', ('01 Kicks',), '01_KICKS'),
@@ -94,11 +96,11 @@ class MapOptionAction(argparse.Action):
         namespace.maps[-1][self.dest] = values
 
 
-def inventory(folder):
+def inventory(folder, filter_cowbells=True):
     files = sorted((p for p in folder.rglob('*') if p.is_file()
                     and p.suffix.lower() == '.wav'),
                    key=lambda p: natural_key(str(p.relative_to(folder))))
-    if folder.name == '10 Percussion':
+    if filter_cowbells and folder.name == '10 Percussion':
         files = [p for p in files if re.search(r'cow[ _-]*bell|cowbell|cowbel|cowb',
                                              p.stem, re.IGNORECASE)]
     return files
@@ -121,8 +123,23 @@ def validate_jobs(jobs):
         names.add(remote)
 
 
-def plan_folder(folder, first, last, limit, bank=None, start=None):
-    default_bank, label, _, remote = category(folder.name)
+def plan_folder(folder, first, last, limit, bank=None, start=None, tag=None):
+    explicit_tag = tag is not None
+    if explicit_tag:
+        if tag not in TAG_VALUES:
+            raise SystemExit(f'Unknown tag: {tag}')
+        default_bank = bank
+        label = tag.replace(' ', '_')[:11]
+        known = next((row for row in BANKS if folder.name in row[2]), None)
+        if known:
+            remote = known[3]
+        else:
+            basename = re.sub(r'[^A-Za-z0-9_-]+', '_', folder.name).strip('_')[:32] or 'samples'
+            digest = hashlib.sha256(str(folder.resolve()).encode()).hexdigest()[:12]
+            remote = f'mapped_{basename}-{digest}'
+    else:
+        default_bank, label, _, remote = category(folder.name)
+        tag = TAG_NAMES[FOLDER_TAGS[folder.name]]
     if not folder.is_dir():
         raise SystemExit(f'Selected folder not found: {folder}')
     bank = (bank or default_bank).upper()
@@ -133,7 +150,7 @@ def plan_folder(folder, first, last, limit, bank=None, start=None):
     start = first if start is None else start
     if not 1 <= start <= 256:
         raise SystemExit('First destination slot must be between 1 and 256')
-    files = inventory(folder)
+    files = inventory(folder, filter_cowbells=not explicit_tag)
     eligible = len(files)
     if not files:
         raise SystemExit(f'No selectable WAV files: {folder}')
@@ -164,7 +181,7 @@ def plan_folder(folder, first, last, limit, bank=None, start=None):
             wav.stem.encode('cp1252')
         except UnicodeEncodeError:
             raise SystemExit(f'Name cannot be encoded as CP1252: {wav.name}') from None
-        jobs.append({'bank': bank, 'label': label, 'source_folder': folder.name,
+        jobs.append({'bank': bank, 'label': label, 'source_folder': folder.name, 'tag': tag,
                      'remote': remote, 'slot': start + offset, 'source_rank': first + offset,
                      'wav': wav, 'remote_name': name})
     return jobs, (bank, label, len(jobs), folder, remote, start, start + len(jobs) - 1)
@@ -187,11 +204,13 @@ def build_plan(root, limit, folders=None, bank=None, start_slot=None):
 def build_maps_plan(root, maps):
     jobs, summary = [], []
     for mapping in maps:
+        if 'tag' not in mapping:
+            raise SystemExit(f"Each --map requires --tag: {mapping['path']}")
         folder = Path(mapping['path']).expanduser()
         folder = (folder if folder.is_absolute() else root / folder).resolve()
         first, last = mapping.get('range', (1, None))
         selected, details = plan_folder(folder, first, last, mapping.get('limit'),
-                                        mapping['bank'], mapping.get('from_slot', 1))
+                                        mapping['bank'], mapping.get('from_slot', 1), mapping['tag'])
         jobs.extend(selected)
         summary.append(details)
     validate_jobs(jobs)

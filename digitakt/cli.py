@@ -8,7 +8,7 @@ import shlex
 from .planning import (MapAction, MapOptionAction, parse_map, parse_range,
                        parse_folder_spec, build_plan, build_maps_plan, DEFAULT_MAPPING_HELP,
                        CapacityError)
-from .sound import create_default_sound, make_sound_data, FOLDER_TAGS, TAG_NAMES
+from .sound import create_default_sound, make_sound_data, FOLDER_TAGS, TAG_NAMES, TAGS
 from .transport import Config, cmd, DTSession, verify_device
 from .transport import check_destinations as list_destinations
 from .execution import execute_jobs, replace_sound
@@ -31,15 +31,17 @@ def parse_args(argv=None):
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=DEFAULT_MAPPING_HELP + '\n\nExample usage:\n'
                '  ./dt-build-banks "/path/to/sample-library" \\\n'
-               '    -m "03 Claps:D" -r 1:10 -f 1 -n\n\n'
+               '    -m "03 Claps:D" --tag CLAP -r 1:10 -f 1 -n\n\n'
                '  ROOT is "/path/to/sample-library", containing the "03 Claps" folder.\n'
                '  -n previews transfers without MIDI connection or writes.\n\n'
                'Combine multiple mappings in one command:\n'
                '  ./dt-build-banks "/path/to/sample-library" \\\n'
-               '    -m "03 Claps:D" -r 1:10 -f 1 \\\n'
-               '    -m "02 Snares:B" -l 10 -f 20 -n\n\n'
+               '    -m "03 Claps:D" --tag CLAP -r 1:10 -f 1 \\\n'
+               '    -m "02 Snares:B" --tag SNARE -l 10 -f 20 -n\n\n'
                '  Repeat -m/--map to combine folders and destination banks.\n'
-               '  -r, -l and -f apply to the preceding mapping until the next -m/--map.\n\n'
+               '  --tag is required for each mapping; folder names are unrestricted.\n'
+               '  --tag, -r, -l and -f apply to the preceding mapping until the next -m/--map.\n\n'
+               'Available tags (Digitakt I):\n  ' + ', '.join(TAGS) + '\n\n'
                'Populate banks A-H (up to 256 available samples per bank):\n'
                '  ./src/elektroid-cli ld\n'
                '  Replace INDEX below with the current Digitakt MIDI index.\n'
@@ -61,6 +63,8 @@ def parse_args(argv=None):
     parser.add_argument('-s', '--start-slot', type=int, help='first destination slot (one --folder only)')
     parser.add_argument('-m', '--map', dest='maps', type=parse_map, action=MapAction,
                         help='FOLDER:BANK; repeatable; starts a selection group')
+    parser.add_argument('--tag', type=str.upper, choices=TAGS, action=MapOptionAction,
+                        metavar='TAG', help='required tag for the preceding --map; see available tags below')
     parser.add_argument('-r', '--range', type=parse_range, action=MapOptionAction,
                         help='FIRST:LAST source range for the preceding --map')
     parser.add_argument('-f', '--from-slot', type=int, action=MapOptionAction,
@@ -75,6 +79,9 @@ def parse_args(argv=None):
         parser.error('--device must be a non-negative integer')
     if args.maps and (args.folder or args.bank or args.start_slot is not None or args.limit is not None):
         parser.error('--map cannot be combined with --folder, --bank, --start-slot or a global limit')
+    for mapping in args.maps or []:
+        if 'tag' not in mapping:
+            parser.error(f"--map {mapping['path']}:{mapping['bank']} requires --tag TAG")
     return args
 
 

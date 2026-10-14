@@ -43,8 +43,16 @@ def generate_sound(bank, slot, name, sample_id, sample_size, sample_hash, tag):
     return bytes(data)
 
 
-def make_sound_data(output, bank, slot, name, sample_id, sample_size, sample_hash, source_folder):
-    if source_folder not in FOLDER_TAGS:
-        raise RuntimeError(f'No verified category for: {source_folder}')
-    tag = TAG_NAMES[FOLDER_TAGS[source_folder]]
+def job_tag(job):
+    if 'tag' in job:
+        return job['tag']
+    return TAG_NAMES[FOLDER_TAGS[job['source_folder']]]
+
+
+def make_sound_data(output, bank, slot, name, sample_id, sample_size, sample_hash, source_folder,
+                    tag=None):
+    if tag is None:
+        if source_folder not in FOLDER_TAGS:
+            raise RuntimeError(f'No verified category for: {source_folder}')
+        tag = TAG_NAMES[FOLDER_TAGS[source_folder]]
     Path(output).write_bytes(generate_sound(bank, slot, name, sample_id, sample_size, sample_hash, tag))
