@@ -77,7 +77,7 @@ class ShortOptionsTest(unittest.TestCase):
         text = output.getvalue()
         self.assertIn('repeatable; starts a selection group', ' '.join(text.split()))
         self.assertEqual(text.count('./dt-build-banks'), 2)
-        self.assertIn('-m "02 Snares:B" --tag SNARE -l 10 -f 20 -n', text)
+        self.assertIn('-m "Snares folder":B --tag SNARE -l 10 -f 20 -n', text)
         self.assertIn('until the next -m/--map', text)
 
     def test_list_tags_without_root_or_side_effects(self):
@@ -95,6 +95,20 @@ class ShortOptionsTest(unittest.TestCase):
             cli.parse_args([])
         self.assertEqual(exit.exception.code, 2)
 
+    def test_list_banks_without_root_or_side_effects(self):
+        output = io.StringIO()
+        with redirect_stdout(output), patch.object(cli, 'create_default_sound') as create, \
+                patch.object(cli, 'cmd') as midi, self.assertRaises(SystemExit) as exit:
+            cli.main(['--list-banks'])
+        self.assertEqual(exit.exception.code, 0)
+        text = output.getvalue()
+        self.assertIn('A-H', text)
+        self.assertIn('256 slots each', text)
+        self.assertIn('A Kicks', text)
+        self.assertIn('any bank can receive any tag', text)
+        create.assert_not_called()
+        midi.assert_not_called()
+
     def test_help_shows_example_with_placeholder_root(self):
         output = io.StringIO()
         with redirect_stdout(output), self.assertRaises(SystemExit) as exit:
@@ -103,8 +117,9 @@ class ShortOptionsTest(unittest.TestCase):
         text = output.getvalue()
         self.assertIn('Example usage:', text)
         self.assertIn('./dt-build-banks "/path/to/sample-library"', text)
-        self.assertIn('-m "03 Claps:D" --tag CLAP -r 1:10 -f 1 -n', text)
-        self.assertIn('ROOT contains the mapped folders', text)
+        self.assertIn('-m "Claps folder":D --tag CLAP -r 1:10 -f 1 -n', text)
+        self.assertIn('actual folder names under ROOT', text)
+        self.assertIn('--list-banks', text)
 
     def test_dry_run_help_explains_preview_and_execution(self):
         output = io.StringIO()
