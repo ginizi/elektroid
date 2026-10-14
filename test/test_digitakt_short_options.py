@@ -30,7 +30,7 @@ class ShortOptionsTest(unittest.TestCase):
                 if not selection:
                     command = text.splitlines()[-1].strip()
                     self.assertEqual(shlex.split(command),
-                                     ['./dt-build-banks', str(root.resolve()),
+                                     ['./scripts/dt-build-banks', str(root.resolve()),
                                       '--limit', '256', '--device', '13', '-n'])
                 else:
                     self.assertNotIn('Preview up to 256', text)
@@ -76,7 +76,7 @@ class ShortOptionsTest(unittest.TestCase):
             cli.parse_args(['--help'])
         text = output.getvalue()
         self.assertIn('repeatable; starts a selection group', ' '.join(text.split()))
-        self.assertEqual(text.count('./dt-build-banks'), 2)
+        self.assertEqual(text.count('./scripts/dt-build-banks'), 2)
         self.assertIn('-m "Snares folder":B --tag SNARE -l 10 -f 20 -n', text)
         self.assertIn('until the next -m/--map', text)
 
@@ -116,7 +116,7 @@ class ShortOptionsTest(unittest.TestCase):
         self.assertEqual(exit.exception.code, 0)
         text = output.getvalue()
         self.assertIn('Example usage:', text)
-        self.assertIn('./dt-build-banks "/path/to/sample-library"', text)
+        self.assertIn('./scripts/dt-build-banks "/path/to/sample-library"', text)
         self.assertIn('-m "Claps folder":D --tag CLAP -r 1:10 -f 1 -n', text)
         self.assertIn('actual folder names under ROOT', text)
         self.assertIn('--list-banks', text)
