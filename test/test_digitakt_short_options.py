@@ -11,6 +11,48 @@ from digitakt import cli
 
 
 class ShortOptionsTest(unittest.TestCase):
+    def test_help_explains_repeatable_maps(self):
+        output = io.StringIO()
+        with redirect_stdout(output), self.assertRaises(SystemExit):
+            cli.parse_args(['--help'])
+        text = output.getvalue()
+        self.assertIn('repeatable; starts a selection group', ' '.join(text.split()))
+        self.assertIn('Combine multiple mappings in one command:', text)
+        self.assertIn('-m "02 Snares:B" -l 10 -f 20 -n', text)
+        self.assertIn('until the next -m/--map', text)
+
+    def test_help_shows_full_bank_preview_and_write(self):
+        output = io.StringIO()
+        with redirect_stdout(output), self.assertRaises(SystemExit):
+            cli.parse_args(['--help'])
+        text = output.getvalue()
+        self.assertIn('Populate banks A-H', text)
+        self.assertIn('--limit 256 --device INDEX -n', text)
+        self.assertIn('--limit 256 --device INDEX\n', text)
+        self.assertIn('256 eligible WAVs per category after filters', text)
+        self.assertIn('Samples are not repeated', text)
+
+    def test_help_shows_example_with_placeholder_root(self):
+        output = io.StringIO()
+        with redirect_stdout(output), self.assertRaises(SystemExit) as exit:
+            cli.parse_args(['--help'])
+        self.assertEqual(exit.exception.code, 0)
+        text = output.getvalue()
+        self.assertIn('Example usage:', text)
+        self.assertIn('./dt-build-banks "/path/to/sample-library"', text)
+        self.assertIn('-m "03 Claps:D" -r 1:10 -f 1 -n', text)
+        self.assertIn('containing the "03 Claps" folder', text)
+
+    def test_dry_run_help_explains_preview_and_execution(self):
+        output = io.StringIO()
+        with redirect_stdout(output), self.assertRaises(SystemExit) as exit:
+            cli.parse_args(['--help'])
+        self.assertEqual(exit.exception.code, 0)
+        help_text = ' '.join(output.getvalue().split())
+        self.assertIn('-n, --dry-run', help_text)
+        self.assertIn('without MIDI connection or writes', help_text)
+        self.assertIn('Without this option, execute after confirmation.', help_text)
+
     def test_grouped_aliases_match_long_options(self):
         short = ['ROOT', '-d', '13', '-m', '03 Claps:D', '-r', '1:10', '-f', '1',
                  '-m', '02 Snares:B', '-l', '10', '-f', '20', '-n', '-v']
