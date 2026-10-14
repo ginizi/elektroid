@@ -30,11 +30,8 @@ The configuration is passed explicitly:
 
 Progress shows elapsed/remaining time and estimated finish.
 
-With `--verbose`, it also shows conversion, WAV upload, metadata, generation
-and clear/sound-upload timings and the measured phase total.
-
-The dashboard refreshes an interactive terminal; redirected output contains
-plain snapshots without terminal escape sequences.
+With `--verbose`, it also shows conversion, WAV upload, metadata, generation and clear/sound-upload timings and the measured phase total.
+The dashboard refreshes an interactive terminal; redirected output contains plain snapshots without terminal escape sequences.
 
 ETA is an indicative average, not a promise. Elapsed time covers processed jobs, excluding preflight and the confirmation delay.
 
