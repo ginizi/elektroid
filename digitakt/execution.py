@@ -5,6 +5,7 @@ import time
 from .sound import make_sound_data
 from .transport import cmd, DTSession
 from .presentation import format_slot_ranges, print_progress
+from .reporting import sound_name
 
 
 def replace_sound(session, sound_file, bank, slot):
@@ -31,7 +32,7 @@ def parse_metadata(output):
 def process_job(job, config, session, runner, state=None):
     state = state if state is not None else {}
     timings = state.setdefault('timings', {})
-    name = f"{job['slot']:02d}_{job['label']}"
+    name = sound_name(job)
     remote = f"/{job['remote']}/{job['remote_name']}"
     upload_wav = config.work / '_upload_clean' / f"{job['remote_name']}.wav"
     sound_file = config.work / f"{job['bank']}{job['slot']:03d}_{name}.data"
@@ -63,7 +64,7 @@ def process_job(job, config, session, runner, state=None):
     return timings
 
 
-def execute_jobs(jobs, config, runner=cmd, session_factory=DTSession, verbose=False):
+def execute_jobs(jobs, config, runner=cmd, session_factory=DTSession, verbose=False, report=None):
     prepare_directories(jobs, config, runner)
     durations = []
     states = [{} for job in jobs]
@@ -87,9 +88,16 @@ def execute_jobs(jobs, config, runner=cmd, session_factory=DTSession, verbose=Fa
                 start = time.monotonic()
                 try:
                     timings = process_job(job, config, session, runner, state=states[i])
+                except KeyboardInterrupt:
+                    if report is not None:
+                        report.update(i, 'interrupted', states[i].get('phase', 'unknown'),
+                                      'Interrupted by user; slot state may be uncertain')
+                    raise
                 except Exception as exc:
                     consecutive += 1
                     failures[i] = (states[i].get('phase', 'unknown'), str(exc))
+                    if report is not None:
+                        report.update(i, 'failed', *failures[i])
                     print(f"Failed {job['bank']}{job['slot']:03d} "
                           f"during {failures[i][0]}: {exc}")
                     if consecutive >= 10:
@@ -100,6 +108,8 @@ def execute_jobs(jobs, config, runner=cmd, session_factory=DTSession, verbose=Fa
                 completed.add(i)
                 failures.pop(i, None)
                 recovered += int(retry)
+                if report is not None:
+                    report.update(i, 'recovered' if retry else 'successful', 'complete')
                 durations.append(time.monotonic() - start)
                 print_progress(len(completed), len(jobs), job, durations, timings, verbose=verbose)
             if stopped:

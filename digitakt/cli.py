@@ -3,6 +3,7 @@
 import argparse
 from pathlib import Path
 import time
+import uuid
 from .planning import (MapAction, MapOptionAction, parse_map, parse_range,
                        parse_folder_spec, build_plan, build_maps_plan)
 from .sound import create_default_sound, make_sound_data, FOLDER_TAGS, TAG_NAMES
@@ -10,6 +11,7 @@ from .transport import Config, cmd, DTSession, verify_device
 from .transport import check_destinations as list_destinations
 from .execution import execute_jobs, replace_sound
 from .presentation import print_plan, confirm_execution
+from .reporting import TransferReport
 
 BASE = Path(__file__).resolve().parents[1]
 CLI = BASE / 'src/elektroid-cli'
@@ -38,6 +40,9 @@ def parse_args(argv=None):
                         help='first destination slot for the preceding --map, default 1')
     parser.add_argument('-d', '--device', type=int, default=int(DEVICE), help='MIDI device index, default 1')
     parser.add_argument('-v', '--verbose', action='store_true', help='show individual files and phase timings')
+    parser.add_argument('--report', type=Path, metavar='PATH',
+                        help='CSV mapping and outcomes; default: a new file in generated_sounds. '
+                             'Existing files are never overwritten.')
     args = parser.parse_args(argv)
     if args.device < 0:
         parser.error('--device must be a non-negative integer')
@@ -60,6 +65,12 @@ def main(argv=None):
     print_plan(jobs, summary, args.verbose, config.device)
     if not jobs:
         raise SystemExit('No WAV files found.')
+    report_path = args.report or config.work / f'transfer-report-{uuid.uuid4().hex}.csv'
+    try:
+        report = TransferReport(report_path, jobs, config.work, dry_run=args.dry_run)
+    except OSError as exc:
+        raise SystemExit(f'Cannot create transfer report: {exc}') from exc
+    print(f'Report: {report.path}')
     if args.dry_run:
         print('\nNo uploads performed. Remove --dry-run to execute after confirmation.')
         return
@@ -68,4 +79,5 @@ def main(argv=None):
     confirm_execution(jobs, occupied)
     print('Starting in 3 seconds (Ctrl-C to cancel)...')
     time.sleep(3)
-    execute_jobs(jobs, config, runner=cmd, session_factory=DTSession, verbose=args.verbose)
+    execute_jobs(jobs, config, runner=cmd, session_factory=DTSession,
+                 verbose=args.verbose, report=report)
