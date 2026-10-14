@@ -11,6 +11,38 @@ from digitakt import cli
 
 
 class ShortOptionsTest(unittest.TestCase):
+    def test_default_capacity_error_explains_folder_bank_and_cancellation(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            folder = root / '01 Kicks'
+            folder.mkdir()
+            binary = root / 'cli'
+            binary.touch()
+            files = [folder / f'kick{i}.wav' for i in range(1976)]
+            output = io.StringIO()
+            with patch.object(cli, 'CLI', binary), patch.object(cli, 'cmd') as midi, \
+                    patch('digitakt.planning.inventory', return_value=files), \
+                    redirect_stdout(output), self.assertRaises(SystemExit) as error:
+                cli.main([str(root)])
+            text = str(error.exception)
+            self.assertIn('01 Kicks', text)
+            self.assertIn('1,976', text)
+            self.assertIn('bank A', text)
+            self.assertIn('including to other banks', text)
+            self.assertIn('--limit 256', text)
+            self.assertNotIn('-1719', text)
+            self.assertIn('No --map/--folder provided', output.getvalue())
+            self.assertIn('Samples do not overflow', output.getvalue())
+            midi.assert_not_called()
+
+    def test_help_explains_default_bank_mapping(self):
+        output = io.StringIO()
+        with redirect_stdout(output), self.assertRaises(SystemExit):
+            cli.parse_args(['--help'])
+        self.assertIn('Default mapping', output.getvalue())
+        self.assertIn('A Kicks', output.getvalue())
+        self.assertIn('cowbell filter', output.getvalue())
+
     def test_help_explains_repeatable_maps(self):
         output = io.StringIO()
         with redirect_stdout(output), self.assertRaises(SystemExit):
