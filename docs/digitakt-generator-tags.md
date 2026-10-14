@@ -133,6 +133,12 @@ The entire command is cancelled before any transfer, including to other banks.
 Use `--limit 256` to select up to 256 WAVs per default bank, or use explicit
 mappings and smaller ranges. A later starting slot requires a smaller limit.
 
+In default mode, a capacity error includes a copyable preview command using
+the actual resolved ROOT path and selected MIDI device index. Shell quoting
+preserves spaces and apostrophes. Explicit `--map`/`--folder` selections do not
+receive a default-bank command that would change their destinations. Paths in
+the static `--help` examples remain placeholders.
+
 ```sh
 # Preview all selected slots first.
 ./dt-build-banks "/path/to/sample-library" --limit 256 --device INDEX -n
