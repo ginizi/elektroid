@@ -210,7 +210,16 @@ there is no implicit cowbell filter, even for a folder named `10 Percussion`.
   -m "Vintage effects:A" --tag "SOUND FX" -n
 ```
 
-All 32 validated Digitakt I tags are supported (also listed by `--help`):
+`--help` provides a compact option reference and two mapping examples. This
+document covers the full workflow, default banks and transfer safety.
+
+List all tags without a sample root, MIDI connection or file writes:
+
+```sh
+./dt-build-banks --list-tags
+```
+
+All 32 validated Digitakt I tags are supported (listed by `--list-tags`):
 KICK, SNARE, RIMSHOT, CLAP, TOM, PERCUSSION, HI-HAT, CYMBAL, COWBELL, SYNTH,
 BASS, LEAD, PAD, TEXTURE, CHORD, SOUND FX, ELECTRONIC, METALLIC, ACOUSTIC,
 ATMOSPHERIC, NOISY, GLITCH, HARD, SOFT, DARK, BRIGHT, VINTAGE, EPIC, FAIL,
