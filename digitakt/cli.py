@@ -31,17 +31,26 @@ class ListTagsAction(argparse.Action):
         parser.exit()
 
 
+class ListBanksAction(argparse.Action):
+    def __call__(self, parser, namespace, values, option_string=None):
+        print('Digitakt I banks: A-H, 256 slots each (1-256).\n')
+        print(DEFAULT_MAPPING_HELP)
+        print('\nWith --map, any bank can receive any tag.')
+        parser.exit()
+
+
 def parse_args(argv=None):
     parser = argparse.ArgumentParser(
         description='Build Digitakt I sound banks',
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog='Example usage:\n'
                '  ./dt-build-banks "/path/to/sample-library" \\\n'
-               '    -m "03 Claps:D" --tag CLAP -r 1:10 -f 1 -n\n\n'
+               '    -m "Claps folder":D --tag CLAP -r 1:10 -f 1 -n\n\n'
                '  ./dt-build-banks "/path/to/sample-library" \\\n'
-               '    -m "03 Claps:D" --tag CLAP -r 1:10 -f 1 \\\n'
-               '    -m "02 Snares:B" --tag SNARE -l 10 -f 20 -n\n\n'
-               '  ROOT contains the mapped folders (relative paths or absolute paths).\n'
+               '    -m "Claps folder":D --tag CLAP -r 1:10 -f 1 \\\n'
+               '    -m "Snares folder":B --tag SNARE -l 10 -f 20 -n\n\n'
+               '  Replace "Claps folder" and "Snares folder" with your\n'
+               '  actual folder names under ROOT. Absolute folder paths are also accepted.\n'
                '  --tag is required for each mapping; folder names are unrestricted.\n'
                '  --tag, -r, -l and -f apply to the preceding mapping until the next -m/--map.\n\n'
                'Details and default banks: docs/digitakt-generator-tags.md')
@@ -60,6 +69,8 @@ def parse_args(argv=None):
                         metavar='TAG', help='required tag for the preceding --map; see --list-tags')
     parser.add_argument('--list-tags', nargs=0, action=ListTagsAction,
                         help='list all 32 tags and exit; no ROOT required')
+    parser.add_argument('--list-banks', nargs=0, action=ListBanksAction,
+                        help='list banks and default mappings; no ROOT required')
     parser.add_argument('-r', '--range', type=parse_range, action=MapOptionAction,
                         help='FIRST:LAST source range for the preceding --map')
     parser.add_argument('-f', '--from-slot', type=int, action=MapOptionAction,
