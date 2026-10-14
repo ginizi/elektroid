@@ -33,7 +33,7 @@ class MapsTest(unittest.TestCase):
         self.assertEqual(jobs[2]['source_folder'], '02 Snares')
 
     def test_collision_rejected(self):
-        with self.assertRaisesRegex(SystemExit, 'Collision'):
+        with self.assertRaisesRegex(SystemExit, 'collision'):
             generator.build_maps_plan(self.root, [
                 {'path': '03 Claps', 'bank': 'A', 'limit': 2},
                 {'path': '02 Snares', 'bank': 'A', 'limit': 2}])
@@ -68,18 +68,18 @@ class MapsTest(unittest.TestCase):
         with redirect_stdout(out):
             generator.print_plan(jobs, summary)
         text = out.getvalue()
-        self.assertIn('BANQUE', text)
+        self.assertIn('BANK', text)
         self.assertIn('SLOTS', text)
         self.assertIn('D010–D011', text)
         self.assertIn('D020–D021', text)
         self.assertNotIn('D010–D021', text)
         self.assertNotIn(str(self.root), text)
-        self.assertIn('Total : 4 sounds', text)
+        self.assertIn('Total: 4 sounds', text)
         out = io.StringIO()
         with redirect_stdout(out):
             generator.print_plan(jobs, summary, verbose=True)
         self.assertIn(str(self.root), out.getvalue())
-        self.assertIn('rang 1', out.getvalue())
+        self.assertIn('rank 1', out.getvalue())
 
     def test_invalid_map_syntax(self):
         for value in ('03 Claps', ':A', '03 Claps:Z', '03 Claps:AA'):
@@ -108,7 +108,7 @@ class MapsTest(unittest.TestCase):
     def test_unknown_category_rejected(self):
         path = self.root / 'Unknown'
         path.mkdir()
-        with self.assertRaisesRegex(SystemExit, 'Catégorie'):
+        with self.assertRaisesRegex(SystemExit, 'category'):
             generator.build_maps_plan(self.root, [{'path': str(path), 'bank': 'A'}])
 
     def test_duplicate_source_rejected(self):

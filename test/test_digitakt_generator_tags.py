@@ -62,7 +62,7 @@ class SoundTagsTest(unittest.TestCase):
                 self.assertEqual(int.from_bytes(self.generate(folder)[39:43], "big"), value)
 
     def test_unknown_folder_rejected(self):
-        with self.assertRaisesRegex(RuntimeError, "catégorie"):
+        with self.assertRaisesRegex(RuntimeError, "category"):
             self.generate("99 Unclassified")
 
     def test_individual_generator_explicit_tag(self):

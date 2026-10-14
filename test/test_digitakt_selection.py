@@ -87,7 +87,7 @@ class SelectionTest(unittest.TestCase):
             transport.assert_not_called()
             session.assert_not_called()
         self.assertIn('D100', output.getvalue())
-        self.assertIn('rang 21', output.getvalue())
+        self.assertIn('rank 21', output.getvalue())
         self.assertIn('D119', output.getvalue())
 
     def test_cli_overflow_never_connects_even_execute(self):
@@ -100,7 +100,7 @@ class SelectionTest(unittest.TestCase):
         with patch('sys.argv', argv), patch.object(generator, 'CLI', cli), \
                 patch.object(generator, 'cmd') as transport, \
                 patch.object(generator, 'DTSession') as session:
-            with self.assertRaisesRegex(SystemExit, '7 slots disponibles'):
+            with self.assertRaisesRegex(SystemExit, '7 slots available'):
                 generator.main()
             transport.assert_not_called()
             session.assert_not_called()
@@ -137,7 +137,7 @@ class SelectionTest(unittest.TestCase):
             with patch('sys.argv', argv), patch.object(generator, 'CLI', cli), \
                     patch.object(generator, 'cmd', side_effect=[listing, '']) as midi, \
                     patch('builtins.input', return_value='non'), redirect_stdout(io.StringIO()):
-                with self.assertRaisesRegex(SystemExit, 'Annulé'):
+                with self.assertRaisesRegex(SystemExit, 'Cancelled'):
                     generator.main()
                 self.assertEqual(generator.DEVICE, previous)
                 self.assertEqual(midi.call_args_list[1].args[0],
@@ -239,10 +239,14 @@ class SelectionTest(unittest.TestCase):
                 patch.object(generator, 'cmd', side_effect=[listing, '']) as transport, \
                 patch.object(generator, 'DTSession') as session, \
                 patch('builtins.input', return_value='non'), redirect_stdout(io.StringIO()):
-            with self.assertRaisesRegex(SystemExit, 'Annulé'):
+            with self.assertRaisesRegex(SystemExit, 'Cancelled'):
                 generator.main()
             self.assertEqual(transport.call_count, 2)
             session.assert_not_called()
+
+    def test_english_confirmation(self):
+        with patch('builtins.input', return_value='YES'), redirect_stdout(io.StringIO()):
+            generator.confirm_execution(self.plan(limit=1), [])
 
 
 if __name__ == '__main__':
