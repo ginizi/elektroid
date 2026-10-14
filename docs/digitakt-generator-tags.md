@@ -39,14 +39,14 @@ average, not a promise. Elapsed time covers processed jobs, excluding preflight
 and the confirmation delay.
 
 Binary generation is shared instead of duplicated in shell-embedded Python.
-The existing CLI arguments and destructive confirmation remain unchanged;
+The destructive confirmation remains unchanged;
 the individual wrapper still has its legacy upload device handling.
 
-`dt-build-banks` replaces inherited tags according to the selected source
-folder, not the bank or generated sound name. Closed and open hats both use
-`HI-HAT`. The generic `10 Percussion` folder uses `PERCUSSION`, even though
-the existing bank E selection filters cowbell filenames. Unknown categories
-are rejected; no other bank selection or sample mapping is changed.
+`dt-build-banks` replaces inherited tags with the explicit `--tag` of each
+`--map` group, independently of folder name and destination bank. Without
+`--map`, tags retain their historical source-category mapping: closed and open
+hats use `HI-HAT`, and `10 Percussion` uses `PERCUSSION` with a cowbell filename
+filter. Legacy categories remain restricted; mapping folder names are free.
 
 The individual generator now requires an explicit tag:
 
@@ -98,7 +98,7 @@ distinction is also explained in `--help`.
 
 ```sh
 ./dt-build-banks "/path/to/sample-library" \
-  -m "03 Claps:D" -r 1:10 -f 1 -n
+  -m "03 Claps:D" --tag CLAP -r 1:10 -f 1 -n
 ```
 
 Replace `/path/to/sample-library` with your ROOT directory, containing the
@@ -109,11 +109,11 @@ Replace `/path/to/sample-library` with your ROOT directory, containing the
 
 ```sh
 ./dt-build-banks "/path/to/sample-library" \
-  -m "03 Claps:D" -r 1:10 -f 1 \
-  -m "02 Snares:B" -l 10 -f 20 -n
+  -m "03 Claps:D" --tag CLAP -r 1:10 -f 1 \
+  -m "02 Snares:B" --tag SNARE -l 10 -f 20 -n
 ```
 
-Selection options `-r`, `-l` and `-f` apply to the preceding mapping until the
+Selection options `--tag`, `-r`, `-l` and `-f` apply to the preceding mapping until the
 next `-m` / `--map`, so each group can have its own range, limit and start slot.
 
 To populate banks A-H using the default category mappings, first find the
@@ -172,37 +172,56 @@ the audit trail; this does not undo device writes already made. Forced process
 termination can leave the latest device operation absent from the report.
 
 ```sh
-./dt-build-banks ROOT -m "03 Claps:D" -n --report ./claps-plan.csv
+./dt-build-banks ROOT -m "03 Claps:D" --tag CLAP -n --report ./claps-plan.csv
 ```
 
 `--folder` has no short alias. For example, preview without MIDI:
 
 ```sh
 ./dt-build-banks ROOT -d 13 \
-  -m "03 Claps":D -r 1:10 -f 1 \
-  -m "02 Snares":B -l 10 -f 20 -n -v
+  -m "03 Claps":D --tag CLAP -r 1:10 -f 1 \
+  -m "02 Snares":B --tag SNARE -l 10 -f 20 -n -v
 ```
 
 Use repeatable `--map "FOLDER":BANK` groups to choose each destination:
 
 ```sh
 ./dt-build-banks ROOT \
-  --map "03 Claps":A --range 1:10 --from-slot 10 \
-  --map "02 Snares":D --range 1:10 --from-slot 20 \
+  --map "03 Claps":A --tag CLAP --range 1:10 --from-slot 10 \
+  --map "02 Snares":D --tag SNARE --range 1:10 --from-slot 20 \
   --dry-run
 ```
 
 This places claps in A010–A019 and snares in D020–D029. Every `--map`
-starts a new group. Following `--range`, `--limit` and `--from-slot`
+starts a new group. Following `--tag`, `--range`, `--limit` and `--from-slot`
 options belong to that group until the next `--map`. `--dry-run` is global.
 The default range is the whole folder and the default destination start is 1.
 A group's limit applies after its inclusive source range.
 
-Paths are relative to ROOT or absolute. The directory basename must be a
-supported category (for example `03 Claps`); arbitrary names are rejected
-rather than assigned guessed tags. The source category controls the tag,
-not the destination bank. Existing +Drive directory mappings and category
-filters are unchanged.
+Paths are relative to ROOT or absolute, with unrestricted directory names.
+Each mapping requires one explicit `--tag`; missing, invalid or duplicate tags
+are rejected before MIDI. Tag input is case-insensitive. Quote tags with spaces.
+`--tag` is not accepted without `--map`. All WAVs in a mapped folder are eligible:
+there is no implicit cowbell filter, even for a folder named `10 Percussion`.
+
+```sh
+./dt-build-banks "/path/to/sample-library" \
+  -m "My textures:H" --tag TEXTURE \
+  -m "Vintage effects:A" --tag "SOUND FX" -n
+```
+
+All 32 validated Digitakt I tags are supported (also listed by `--help`):
+KICK, SNARE, RIMSHOT, CLAP, TOM, PERCUSSION, HI-HAT, CYMBAL, COWBELL, SYNTH,
+BASS, LEAD, PAD, TEXTURE, CHORD, SOUND FX, ELECTRONIC, METALLIC, ACOUSTIC,
+ATMOSPHERIC, NOISY, GLITCH, HARD, SOFT, DARK, BRIGHT, VINTAGE, EPIC, FAIL,
+LOOP, MINE, FAVOURITE. Only one tag per group is supported; combinations have
+not been hardware-validated.
+
+Known category folders retain their historical +Drive directories. Free-name
+folders use `mapped_<sanitized-name>-<path-hash>` directories, separating folders
+with identical basenames. Moving a folder changes its path hash and destination.
+Mapped sound names use the slot number and an ASCII tag label shortened to fit
+the 15-character sound-name limit. The report records the exact name and paths.
 
 Groups must not overlap destination slots, repeat source files, or collide
 on remote sample names. Capacity is checked for every group before MIDI.
@@ -236,7 +255,7 @@ the global `--device` option; indices may change between connections:
 
 ```sh
 ./dt-build-banks ROOT --device 13 \
-  --map "03 Claps":D --range 1:2 --from-slot 1 --dry-run
+  --map "03 Claps":D --tag CLAP --range 1:2 --from-slot 1 --dry-run
 ```
 
 The index must be a non-negative integer. It is used for all batch CLI
