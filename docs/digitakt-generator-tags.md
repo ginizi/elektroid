@@ -90,6 +90,29 @@ Short and long options may be mixed without changing selection groups:
 | `-s` | `--start-slot` (legacy) |
 | `-h` | `--help` |
 
+### Transfer report
+
+Every invocation with a non-empty plan creates a new CSV report in
+`generated_sounds/` and prints its path. Use `--report PATH` to choose a file;
+an existing file is never overwritten when starting a run.
+
+The report maps each bank/slot to the exact generated sound name, absolute WAV
+source path, sample path on the +Drive, verified tag and generated `.data` path.
+It also records status, attempt count, phase and the last failure message.
+The name is the generated name, not a readback of the previously occupied slot.
+
+With `-n`, rows are `planned`; no MIDI connection is opened. During execution,
+rows start as `not_executed` and become `successful`, `failed` or `recovered`
+after each attempt. Ctrl-C during a transfer records `interrupted` when possible.
+Successful retries retain the previous error for diagnosis. Updates replace
+the report atomically. A report write failure stops execution to avoid losing
+the audit trail; this does not undo device writes already made. Forced process
+termination can leave the latest device operation absent from the report.
+
+```sh
+./dt-build-banks ROOT -m "03 Claps:D" -n --report ./claps-plan.csv
+```
+
 `--folder` has no short alias. For example, preview without MIDI:
 
 ```sh
