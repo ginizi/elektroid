@@ -22,9 +22,9 @@ class MapsTest(unittest.TestCase):
                 (path / f'{i}.wav').touch()
 
     def test_two_independent_maps(self):
-        maps = [{'path': '03 Claps', 'bank': 'A', 'range': (2, 5), 'limit': 2,
+        maps = [{'path': '03 Claps', 'bank': 'A', 'tag': 'CLAP', 'range': (2, 5), 'limit': 2,
                  'from_slot': 10},
-                {'path': str(self.root / '02 Snares'), 'bank': 'D', 'range': (4, 5),
+                {'path': str(self.root / '02 Snares'), 'bank': 'D', 'tag': 'SNARE', 'range': (4, 5),
                  'from_slot': 20}]
         jobs, _ = generator.build_maps_plan(self.root, maps)
         self.assertEqual([(j['bank'], j['slot'], j['source_rank']) for j in jobs],
@@ -35,13 +35,13 @@ class MapsTest(unittest.TestCase):
     def test_collision_rejected(self):
         with self.assertRaisesRegex(SystemExit, 'collision'):
             generator.build_maps_plan(self.root, [
-                {'path': '03 Claps', 'bank': 'A', 'limit': 2},
-                {'path': '02 Snares', 'bank': 'A', 'limit': 2}])
+                {'path': '03 Claps', 'bank': 'A', 'tag': 'CLAP', 'limit': 2},
+                {'path': '02 Snares', 'bank': 'A', 'tag': 'SNARE', 'limit': 2}])
 
     def test_overflow_rejected(self):
         with self.assertRaises(SystemExit):
             generator.build_maps_plan(self.root, [
-                {'path': '03 Claps', 'bank': 'D', 'limit': 3, 'from_slot': 255}])
+                {'path': '03 Claps', 'bank': 'D', 'tag': 'CLAP', 'limit': 3, 'from_slot': 255}])
 
     def test_cli_grouped_dry_run(self):
         template = self.root / 'template.data'
@@ -49,8 +49,8 @@ class MapsTest(unittest.TestCase):
         cli = self.root / 'cli'
         cli.touch()
         argv = ['dt-build-banks', str(self.root),
-                '--map', '03 Claps:a', '--range', '2:5', '--limit', '2', '--from-slot', '10',
-                '--map', '02 Snares:D', '--range', '4:5', '--from-slot', '20', '--dry-run']
+                '--map', '03 Claps:a', '--tag', 'CLAP', '--range', '2:5', '--limit', '2', '--from-slot', '10',
+                '--map', '02 Snares:D', '--tag', 'SNARE', '--range', '4:5', '--from-slot', '20', '--dry-run']
         out = io.StringIO()
         with patch('sys.argv', argv), patch.object(generator, 'CLI', cli), \
                 patch.object(generator, 'cmd') as midi, redirect_stdout(out):
@@ -62,8 +62,8 @@ class MapsTest(unittest.TestCase):
 
     def test_compact_preview_and_exact_ranges(self):
         jobs, summary = generator.build_maps_plan(self.root, [
-            {'path': '03 Claps', 'bank': 'D', 'range': (1, 2), 'from_slot': 10},
-            {'path': '03 Claps', 'bank': 'D', 'range': (4, 5), 'from_slot': 20}])
+            {'path': '03 Claps', 'bank': 'D', 'tag': 'CLAP', 'range': (1, 2), 'from_slot': 10},
+            {'path': '03 Claps', 'bank': 'D', 'tag': 'CLAP', 'range': (4, 5), 'from_slot': 20}])
         out = io.StringIO()
         with redirect_stdout(out):
             generator.print_plan(jobs, summary)
@@ -86,8 +86,8 @@ class MapsTest(unittest.TestCase):
 
     def test_destination_banks_before_device_in_mapping_order(self):
         jobs, summary = generator.build_maps_plan(self.root, [
-            {'path': '03 Claps', 'bank': 'D', 'limit': 1},
-            {'path': '02 Snares', 'bank': 'B', 'limit': 1, 'from_slot': 20}])
+            {'path': '03 Claps', 'bank': 'D', 'tag': 'CLAP', 'limit': 1},
+            {'path': '02 Snares', 'bank': 'B', 'tag': 'SNARE', 'limit': 1, 'from_slot': 20}])
         out = io.StringIO()
         with redirect_stdout(out):
             generator.print_plan(jobs, summary)
@@ -120,17 +120,80 @@ class MapsTest(unittest.TestCase):
                 self.assertEqual(error.exception.code, 2)
                 midi.assert_not_called()
 
-    def test_unknown_category_rejected(self):
+    def test_missing_tag_rejected(self):
         path = self.root / 'Unknown'
         path.mkdir()
-        with self.assertRaisesRegex(SystemExit, 'category'):
+        with self.assertRaisesRegex(SystemExit, 'tag'):
             generator.build_maps_plan(self.root, [{'path': str(path), 'bank': 'A'}])
 
     def test_duplicate_source_rejected(self):
         with self.assertRaisesRegex(SystemExit, 'source'):
             generator.build_maps_plan(self.root, [
-                {'path': '03 Claps', 'bank': 'A', 'limit': 2},
-                {'path': '03 Claps', 'bank': 'B', 'limit': 2}])
+                {'path': '03 Claps', 'bank': 'A', 'tag': 'CLAP', 'limit': 2},
+                {'path': '03 Claps', 'bank': 'B', 'tag': 'CLAP', 'limit': 2}])
+
+    def test_free_folder_all_tags_and_matching_payload(self):
+        from digitakt.sound import TAGS, TAG_VALUES
+        from digitakt.reporting import sound_name, TransferReport
+        from digitakt.execution import process_job
+        from digitakt.transport import Config
+        from unittest.mock import Mock
+        import csv
+        folder = self.root / 'My textures'
+        folder.mkdir()
+        (folder / 'sample.wav').touch()
+        for tag in TAGS:
+            with self.subTest(tag=tag):
+                jobs, _ = generator.build_maps_plan(self.root, [
+                    {'path': folder.name, 'bank': 'A', 'tag': tag}])
+                job = jobs[0]
+                self.assertEqual(job['tag'], tag)
+                session = Mock()
+                session.command.return_value = 'SAMPLE_INFO id=00000001 size=100 hash=00000002'
+                process_job(job, Config(Path('cli'), '13', self.root), session, Mock())
+                data = (self.root / f'A001_{sound_name(job)}.data').read_bytes()
+                self.assertEqual(int.from_bytes(data[39:43], 'big'), TAG_VALUES[tag])
+                self.assertEqual(data[43:59].rstrip(b'\0').decode(), sound_name(job))
+                out = io.StringIO()
+                with redirect_stdout(out):
+                    generator.print_plan(jobs, [])
+                self.assertIn(tag, out.getvalue())
+                report_path = self.root / f'report-{TAG_VALUES[tag]}.csv'
+                TransferReport(report_path, jobs, self.root, dry_run=True)
+                with report_path.open(newline='') as stream:
+                    self.assertEqual(next(csv.DictReader(stream))['tag'], tag)
+
+    def test_homonymous_free_folders_have_distinct_sample_destinations(self):
+        maps = []
+        for parent, bank in (('first', 'A'), ('second', 'B')):
+            folder = self.root / parent / 'My drums'
+            folder.mkdir(parents=True)
+            (folder / 'sample.wav').touch()
+            maps.append({'path': str(folder), 'bank': bank, 'tag': 'KICK'})
+        jobs, _ = generator.build_maps_plan(self.root, maps)
+        self.assertNotEqual(jobs[0]['remote'], jobs[1]['remote'])
+
+    def test_map_does_not_apply_historical_cowbell_filter(self):
+        folder = self.root / '10 Percussion'
+        folder.mkdir()
+        for name in ('cowbell.wav', 'shaker.wav'):
+            (folder / name).touch()
+        jobs, _ = generator.build_maps_plan(self.root, [
+            {'path': folder.name, 'bank': 'E', 'tag': 'PERCUSSION'}])
+        self.assertEqual(len(jobs), 2)
+        jobs, _ = generator.build_plan(self.root, None, [(folder.name, 1, None)])
+        self.assertEqual(len(jobs), 1)
+
+    def test_cli_requires_one_valid_tag_per_map(self):
+        cases = [ ['--map', 'My textures:A'], ['--tag', 'PAD'],
+                  ['--map', 'My textures:A', '--tag', 'INVALID'],
+                  ['--map', 'My textures:A', '--tag', 'PAD', '--tag', 'BASS'],
+                  ['--map', 'My textures:A', '--tag', 'PAD', '--map', 'Other:B'] ]
+        for args in cases:
+            with self.subTest(args=args), patch('sys.stderr', io.StringIO()):
+                with self.assertRaises(SystemExit) as error:
+                    generator.parse_args([str(self.root), *args])
+                self.assertEqual(error.exception.code, 2)
 
 
 if __name__ == '__main__':

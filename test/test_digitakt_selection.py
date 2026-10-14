@@ -129,7 +129,7 @@ class SelectionTest(unittest.TestCase):
         cli = self.root / 'cli'
         cli.touch()
         argv = ['dt-build-banks', str(self.root), '--device', '13',
-                '--map', '02 Snares:D', '--limit', '1']
+                '--map', '02 Snares:D', '--tag', 'SNARE', '--limit', '1']
         listing = ('13: id: Elektron Digitakt :: Elektron Digitakt; '
                    'name: Elektron Digitakt :: Elektron Digitakt\n')
         previous = generator.DEVICE
@@ -151,7 +151,7 @@ class SelectionTest(unittest.TestCase):
         previous = generator.DEVICE
         try:
             with patch('sys.argv', ['dt-build-banks', str(self.root), '--device', '13',
-                                   '--map', '02 Snares:D', '--limit', '1', '--dry-run']), \
+                                   '--map', '02 Snares:D', '--tag', 'SNARE', '--limit', '1', '--dry-run']), \
                     patch.object(generator, 'CLI', cli), patch.object(generator, 'cmd') as midi, \
                     redirect_stdout(io.StringIO()):
                 generator.main()
