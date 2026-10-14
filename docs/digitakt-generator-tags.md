@@ -144,10 +144,7 @@ Without `--map` or `--folder`, category assignment is fixed:
 | G | Open hats |
 | H | Cymbals |
 
-Missing category folders are skipped.
-
-This is not an even distribution of all WAVs across banks: a category never
-overflows into the next bank.
+Missing category folders are skipped. This is not an even distribution of all WAVs across banks: a category never overflows into the next bank.
 
 The CLI explains this mapping before building the default plan and also
 lists it with `--list-banks`.
