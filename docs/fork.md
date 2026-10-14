@@ -43,15 +43,15 @@ Discover the current MIDI device index (this command accesses MIDI):
 Inspect the available banks and tags without connecting to MIDI:
 
 ```sh
-./dt-build-banks --help
-./dt-build-banks --list-banks
-./dt-build-banks --list-tags
+./scripts/dt-build-banks --help
+./scripts/dt-build-banks --list-banks
+./scripts/dt-build-banks --list-tags
 ```
 
 Preview a plan, replacing `INDEX` with your device index:
 
 ```sh
-./dt-build-banks "/path/to/sample-library" --device INDEX \
+./scripts/dt-build-banks "/path/to/sample-library" --device INDEX \
   -m "Claps folder":D --tag CLAP -r 1:10 -f 1 \
   -m "Snares folder":B --tag SNARE -l 10 -f 20 -n
 ```
