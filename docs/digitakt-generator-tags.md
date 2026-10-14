@@ -132,12 +132,14 @@ device index still needs to match the Digitakt pair.
 
 ### Compact preview
 
-The default preview is a table of bank, destination slots, count, actual tag
-and source directory name, followed by the total and exact destination ranges.
+The preview starts with destination banks in mapping order. Each bank shows
+its exact slot ranges and every source filename next to its destination slot
+and actual tag, including without `--verbose`. The total count and MIDI index
+follow the bank/file listing.
 The confirmation summarizes occupied and target slots without listing every
 slot. Non-contiguous ranges remain separate; no gaps are implied to be cleared.
 Add the global `--verbose` flag to display full source paths, source ranks,
-sound names and remote sample paths. This changes display only, not selection
+sound names and +Drive WAV destinations. This changes display only, not selection
 or MIDI operations. `--dry-run` remains necessary to avoid execution.
 
 ### MIDI device selection
