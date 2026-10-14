@@ -25,33 +25,26 @@ def check_destinations(jobs, config=None):
     return list_destinations(jobs, config, runner=cmd)
 
 
+class ListTagsAction(argparse.Action):
+    def __call__(self, parser, namespace, values, option_string=None):
+        print('\n'.join(TAGS))
+        parser.exit()
+
+
 def parse_args(argv=None):
     parser = argparse.ArgumentParser(
         description='Build Digitakt I sound banks',
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog=DEFAULT_MAPPING_HELP + '\n\nExample usage:\n'
+        epilog='Example usage:\n'
                '  ./dt-build-banks "/path/to/sample-library" \\\n'
                '    -m "03 Claps:D" --tag CLAP -r 1:10 -f 1 -n\n\n'
-               '  ROOT is "/path/to/sample-library", containing the "03 Claps" folder.\n'
-               '  -n previews transfers without MIDI connection or writes.\n\n'
-               'Combine multiple mappings in one command:\n'
                '  ./dt-build-banks "/path/to/sample-library" \\\n'
                '    -m "03 Claps:D" --tag CLAP -r 1:10 -f 1 \\\n'
                '    -m "02 Snares:B" --tag SNARE -l 10 -f 20 -n\n\n'
-               '  Repeat -m/--map to combine folders and destination banks.\n'
+               '  ROOT contains the mapped folders (relative paths or absolute paths).\n'
                '  --tag is required for each mapping; folder names are unrestricted.\n'
                '  --tag, -r, -l and -f apply to the preceding mapping until the next -m/--map.\n\n'
-               'Available tags (Digitakt I):\n  ' + ', '.join(TAGS) + '\n\n'
-               'Populate banks A-H (up to 256 available samples per bank):\n'
-               '  ./src/elektroid-cli ld\n'
-               '  Replace INDEX below with the current Digitakt MIDI index.\n'
-               '  Preview first:\n'
-               '    ./dt-build-banks "/path/to/sample-library" --limit 256 --device INDEX -n\n'
-               '  Write after reviewing the preview (confirmation required):\n'
-               '    ./dt-build-banks "/path/to/sample-library" --limit 256 --device INDEX\n\n'
-               '  Filling all 2,048 slots requires 256 eligible WAVs per category after filters.\n'
-               '  Samples are not repeated; fewer WAVs leave remaining slots unchanged.\n'
-               '  Target slots are cleared and overwritten; no automatic backup.')
+               'Details and default banks: docs/digitakt-generator-tags.md')
     parser.add_argument('root', type=Path, help='root directory containing sample folders')
     parser.add_argument('-n', '--dry-run', action='store_true',
                         help='Preview planned transfers without MIDI connection or writes. '
@@ -64,7 +57,9 @@ def parse_args(argv=None):
     parser.add_argument('-m', '--map', dest='maps', type=parse_map, action=MapAction,
                         help='FOLDER:BANK; repeatable; starts a selection group')
     parser.add_argument('--tag', type=str.upper, choices=TAGS, action=MapOptionAction,
-                        metavar='TAG', help='required tag for the preceding --map; see available tags below')
+                        metavar='TAG', help='required tag for the preceding --map; see --list-tags')
+    parser.add_argument('--list-tags', nargs=0, action=ListTagsAction,
+                        help='list all 32 tags and exit; no ROOT required')
     parser.add_argument('-r', '--range', type=parse_range, action=MapOptionAction,
                         help='FIRST:LAST source range for the preceding --map')
     parser.add_argument('-f', '--from-slot', type=int, action=MapOptionAction,
