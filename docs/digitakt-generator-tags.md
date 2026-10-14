@@ -10,6 +10,32 @@ an internal model, not a complete decoded specification or a claim to match
 factory INIT settings. The generators replace its name, tags, file index and
 sample references and recalculate the CRC. Keep the module beside the scripts.
 
+## Python organization
+
+Both commands are thin entry points. Keep the `digitakt/` package beside
+them; no installation framework or new Python dependency is required.
+
+| Module | Responsibility |
+| --- | --- |
+| `cli` | Parse options, create immutable configuration, orchestrate preflight |
+| `planning` | Inventory, ranges, destinations, capacity and collisions; no MIDI |
+| `sound` | Shared pure binary generation, tags and CRC |
+| `transport` | Process boundary and MIDI session lifecycle |
+| `execution` | Convert sample, retrieve metadata, generate, clear and upload |
+| `presentation` | Compact preview, confirmation and progress |
+| `single` | Individual generator CLI using the shared sound implementation |
+
+The configuration is passed explicitly: parsing `--device` does not mutate
+a global device value. Execution accepts a command runner and session factory
+for offline tests. The session is a context manager and closes on success,
+failure or interruption. The batch has one pass, no retry and no automatic
+download. Progress uses compact lines without clearing the terminal; ETA is
+an indicative average, not a promise.
+
+Binary generation is shared instead of duplicated in shell-embedded Python.
+The existing CLI arguments and destructive confirmation remain unchanged;
+the individual wrapper still has its legacy upload device handling.
+
 `dt-build-banks` replaces inherited tags according to the selected source
 folder, not the bank or generated sound name. Closed and open hats both use
 `HI-HAT`. The generic `10 Percussion` folder uses `PERCUSSION`, even though
