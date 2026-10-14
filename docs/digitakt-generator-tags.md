@@ -213,6 +213,20 @@ there is no implicit cowbell filter, even for a folder named `10 Percussion`.
 `--help` provides a compact option reference and two mapping examples. This
 document covers the full workflow, default banks and transfer safety.
 
+In help examples, `"Claps folder":D` and `"Snares folder":B` refer to
+directories: replace the quoted names with your actual folder names under
+ROOT, or absolute folder paths. Bank letters remain outside the quotes.
+
+List banks A-H (256 slots each) and historical default mappings without
+ROOT, MIDI access or file writes:
+
+```sh
+./dt-build-banks --list-banks
+```
+
+Default assignments apply only without explicit mappings. With `--map`,
+any bank can receive any tag.
+
 List all tags without a sample root, MIDI connection or file writes:
 
 ```sh
