@@ -29,8 +29,9 @@ The configuration is passed explicitly: parsing `--device` does not mutate
 a global device value. Execution accepts a command runner and session factory
 for offline tests. The session is a context manager and closes on success,
 failure or interruption. The batch has one pass, no retry and no automatic
-download. Progress shows conversion, WAV upload, metadata, generation and
-clear/sound-upload timings, elapsed/remaining time and estimated finish.
+download. Progress shows elapsed/remaining time and estimated finish.
+With `--verbose`, it also shows conversion, WAV upload, metadata, generation
+and clear/sound-upload timings and the measured phase total.
 The dashboard refreshes an interactive terminal; redirected output contains
 plain snapshots without terminal escape sequences. ETA is an indicative
 average, not a promise. Elapsed time covers processed jobs, excluding preflight
