@@ -98,7 +98,6 @@ static GtkWidget *preferences_button;
 static GtkWidget *about_button;
 static GtkWidget *local_name_entry;
 static GtkWidget *local_box;
-static GtkWidget *remote_devices_box;
 static GtkWidget *remote_box;
 static GtkWidget *local_side;
 static GtkWidget *remote_side;
@@ -421,8 +420,9 @@ static gboolean
 elektroid_check_backend_int (gboolean startup)
 {
   gboolean connected = backend_check (BACKEND);
+  guint fss = g_slist_length (BACKEND->fs_ops);
 
-  gtk_widget_set_sensitive (remote_box, connected);
+  gtk_widget_set_sensitive (remote_box, connected && fss);
 
   if (!connected)
     {
@@ -1262,20 +1262,20 @@ elektroid_set_fs (GtkWidget *object, gpointer data)
   gint fs;
   const struct fs_operations *fs_ops;
 
-  if (!gtk_combo_box_get_active_iter (GTK_COMBO_BOX (fs_combo), &iter))
+  if (gtk_combo_box_get_active_iter (GTK_COMBO_BOX (fs_combo), &iter))
     {
-      browser_set_reload_item_in_editor (&local_browser, FALSE);
-      browser_remote_set_fs_operations (NULL);
-      browser_set_reload_item_in_editor (&local_browser, TRUE);
-      return;
+      gtk_tree_model_get_value (GTK_TREE_MODEL (fs_list_store),
+				&iter, FS_LIST_STORE_ID_FIELD, &fsv);
+      fs = g_value_get_uint (&fsv);
+      g_value_unset (&fsv);
+
+      fs_ops = backend_get_fs_operations_by_id (BACKEND, fs);
+    }
+  else
+    {
+      fs_ops = NULL;
     }
 
-  gtk_tree_model_get_value (GTK_TREE_MODEL (fs_list_store),
-			    &iter, FS_LIST_STORE_ID_FIELD, &fsv);
-  fs = g_value_get_uint (&fsv);
-  g_value_unset (&fsv);
-
-  fs_ops = backend_get_fs_operations_by_id (BACKEND, fs);
   browser_set_reload_item_in_editor (&local_browser, FALSE);
   browser_remote_set_fs_operations (fs_ops);
   browser_set_reload_item_in_editor (&local_browser, TRUE);
@@ -1314,13 +1314,19 @@ elektroid_fill_fs_combo_bg (gpointer data)
   g_signal_handlers_unblock_by_func (fs_combo, G_CALLBACK (elektroid_set_fs),
 				     NULL);
 
+  browser_set_reload_item_in_editor (&local_browser, FALSE);
   if (any)
     {
       debug_print (1, "Selecting first filesystem...");
-      browser_set_reload_item_in_editor (&local_browser, FALSE);
       gtk_combo_box_set_active (GTK_COMBO_BOX (fs_combo), 0);
-      browser_set_reload_item_in_editor (&local_browser, TRUE);
     }
+  else
+    {
+      debug_print (1, "No filesystems. Unsetting the remote browser...");
+      browser_reset (&remote_browser);
+      elektroid_check_backend ();
+    }
+  browser_set_reload_item_in_editor (&local_browser, TRUE);
 
   return FALSE;
 }
@@ -1749,8 +1755,6 @@ elektroid_startup (GApplication *gapp, gpointer *user_data)
 
   local_name_entry =
     GTK_WIDGET (gtk_builder_get_object (builder, "local_name_entry"));
-  remote_devices_box =
-    GTK_WIDGET (gtk_builder_get_object (builder, "remote_devices_box"));
   local_box = GTK_WIDGET (gtk_builder_get_object (builder, "local_box"));
   remote_box = GTK_WIDGET (gtk_builder_get_object (builder, "remote_box"));
   local_side = GTK_WIDGET (gtk_builder_get_object (builder, "local_side"));
