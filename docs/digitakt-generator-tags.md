@@ -117,7 +117,21 @@ Selection options `-r`, `-l` and `-f` apply to the preceding mapping until the
 next `-m` / `--map`, so each group can have its own range, limit and start slot.
 
 To populate banks A-H using the default category mappings, first find the
-current Digitakt MIDI index with `./src/elektroid-cli ld`. Replace `INDEX`:
+current Digitakt MIDI index with `./src/elektroid-cli ld`. Replace `INDEX` in
+the commands below.
+
+Without `--map` or `--folder`, category assignment is fixed: kicks to A,
+snares to B, toms to C, claps to D, cowbells to E, closed hats to F, open hats
+to G and cymbals to H. Missing category folders are skipped. This is not an
+even distribution of all WAVs across banks; a category never overflows into
+the next bank. The CLI explains this mapping before building the default plan
+and also lists it in `--help`.
+
+If a selection exceeds capacity, the diagnostic names the source folder,
+eligible WAV count, selected count, destination bank and available slot range.
+The entire command is cancelled before any transfer, including to other banks.
+Use `--limit 256` to select up to 256 WAVs per default bank, or use explicit
+mappings and smaller ranges. A later starting slot requires a smaller limit.
 
 ```sh
 # Preview all selected slots first.
