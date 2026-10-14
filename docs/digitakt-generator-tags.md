@@ -25,12 +25,15 @@ them; no installation framework or new Python dependency is required.
 | `presentation` | Compact preview, confirmation and progress |
 | `single` | Individual generator CLI using the shared sound implementation |
 
-The configuration is passed explicitly: parsing `--device` does not mutate
-a global device value. Execution accepts a command runner and session factory
-for offline tests. The session is a context manager and closes on success,
-failure or interruption. The batch collects failed transfers and retries them
-once at the end, without automatic download. Progress shows elapsed/remaining
-time and estimated finish.
+The configuration is passed explicitly:
+
+- Parsing `--device` does not mutate a global device value.
+- Execution accepts a command runner and session factory for offline tests.
+- The session is a context manager and closes on success, failure or interruption.
+- The batch collects failed transfers and retries them once at the end,
+  without automatic download.
+
+Progress shows elapsed/remaining time and estimated finish.
 
 With `--verbose`, it also shows conversion, WAV upload, metadata, generation
 and clear/sound-upload timings and the measured phase total.
@@ -57,8 +60,12 @@ The individual generator now requires an explicit tag:
 ./dt-make-sound SAMPLE_PATH B 1 01_SNARE SNARE
 ```
 
-Quote tags containing spaces. Add `--upload` only after checking the generated
-file, device, destination slot and backup. Without it, generation does not
+Quote tags containing spaces.
+
+Add `--upload` only after checking the generated file, device, destination
+slot and backup.
+
+Without it, generation does not
 upload the sound; sample metadata retrieval still opens a MIDI connection.
 
 The existing individual wrapper's hard-coded device handling is unchanged.
@@ -96,8 +103,11 @@ Short and long options may be mixed without changing selection groups:
 | `-h` | `--help` |
 
 `-n` / `--dry-run` previews planned transfers without a MIDI connection or
-writes. Without this option, transfers execute after confirmation. This
-distinction is also explained in `--help`.
+device writes.
+
+**Without this option, transfers execute after confirmation.**
+
+This distinction is also explained in `--help`.
 
 `--help` includes a complete example with a placeholder library path:
 
@@ -128,12 +138,26 @@ To populate banks A-H using the default category mappings, first find the
 current Digitakt MIDI index with `./src/elektroid-cli ld`. Replace `INDEX` in
 the commands below.
 
-Without `--map` or `--folder`, category assignment is fixed: kicks to A,
-snares to B, toms to C, claps to D, cowbells to E, closed hats to F, open hats
-to G and cymbals to H. Missing category folders are skipped. This is not an
-even distribution of all WAVs across banks; a category never overflows into
-the next bank. The CLI explains this mapping before building the default plan
-and also lists it with `--list-banks`.
+Without `--map` or `--folder`, category assignment is fixed:
+
+| Bank | Category |
+| --- | --- |
+| A | Kicks |
+| B | Snares |
+| C | Toms |
+| D | Claps |
+| E | Cowbells |
+| F | Closed hats |
+| G | Open hats |
+| H | Cymbals |
+
+Missing category folders are skipped.
+
+This is not an even distribution of all WAVs across banks: a category never
+overflows into the next bank.
+
+The CLI explains this mapping before building the default plan and also
+lists it with `--list-banks`.
 
 If a selection exceeds capacity, the diagnostic names the source folder,
 eligible WAV count, selected count, destination bank and available slot range.
@@ -169,15 +193,20 @@ Every invocation with a non-empty plan creates a new CSV report in
 `generated_sounds/` and prints its path. Use `--report PATH` to choose a file;
 an existing file is never overwritten when starting a run.
 
-The report maps each bank/slot to the exact generated sound name, absolute WAV
-source path, sample path on the +Drive, verified tag and generated `.data` path.
-It also records status, attempt count, phase and the last failure message.
+For each bank/slot, the report records:
+
+- Exact generated sound name.
+- Absolute WAV source path.
+- Sample path on the +Drive.
+- Verified tag and generated `.data` path.
+- Status, attempt count, phase and last failure message.
 
 The name is the generated name, not a readback of the previously occupied slot.
 
-With `-n`, rows are `planned`; no MIDI connection is opened. During execution,
-rows start as `not_executed` and become `successful`, `failed` or `recovered`
-after each attempt. Ctrl-C during a transfer records `interrupted` when possible.
+- With `-n`, rows are `planned`; no MIDI connection is opened.
+- During execution, rows start as `not_executed`.
+- After each attempt, they become `successful`, `failed` or `recovered`.
+- Ctrl-C during a transfer records `interrupted` when possible.
 
 Successful retries retain the previous error for diagnosis. Updates replace
 the report atomically.
@@ -209,19 +238,27 @@ Use repeatable `--map "FOLDER":BANK` groups to choose each destination:
   --dry-run
 ```
 
-This places claps in A010–A019 and snares in D020–D029. Every `--map`
-starts a new group. Following `--tag`, `--range`, `--limit` and `--from-slot`
-options belong to that group until the next `--map`. `--dry-run` is global.
+This places claps in A010–A019 and snares in D020–D029.
+
+- Every `--map` starts a new group.
+- Following `--tag`, `--range`, `--limit` and `--from-slot` options belong
+  to that group until the next `--map`.
+- `--dry-run` is global.
 
 The default range is the whole folder and the default destination start is 1.
 A group's limit applies after its inclusive source range.
 
 Paths are relative to ROOT or absolute, with unrestricted directory names.
 
-Each mapping requires one explicit `--tag`; missing, invalid or duplicate tags
-are rejected before MIDI. Tag input is case-insensitive. Quote tags with spaces.
+Each mapping requires one explicit `--tag`.
 
-`--tag` is not accepted without `--map`. All WAVs in a mapped folder are eligible:
+- Missing, invalid or duplicate tags are rejected before MIDI.
+- Tag input is case-insensitive.
+- Quote tags with spaces.
+
+`--tag` is not accepted without `--map`.
+
+All WAVs in a mapped folder are eligible:
 there is no implicit cowbell filter, even for a folder named `10 Percussion`.
 
 ```sh
@@ -298,17 +335,26 @@ The configured MIDI device index still needs to match the Digitakt pair.
 
 ### Compact preview
 
-The preview starts with destination banks in mapping order. Each bank shows
-its exact slot ranges and every source filename next to its destination slot
-and actual tag, including without `--verbose`. The total count and MIDI index
-follow the bank/file listing.
+The preview starts with destination banks in mapping order.
+
+Each bank shows, including without `--verbose`:
+
+- Exact destination slot ranges.
+- Every source filename next to its destination slot and actual tag.
+
+The total count and MIDI index follow the bank/file listing.
 
 The confirmation summarizes occupied and target slots without listing every
 slot. Non-contiguous ranges remain separate; no gaps are implied to be cleared.
 
-Add the global `--verbose` flag to display full source paths, source ranks,
-sound names and +Drive WAV destinations. This changes display only, not selection
-or MIDI operations. `--dry-run` remains necessary to avoid execution.
+Add the global `--verbose` flag to display:
+
+- Full source paths and source ranks.
+- Sound names and +Drive WAV destinations.
+
+This changes display only, not selection or MIDI operations.
+
+**`--dry-run` remains necessary to avoid execution.**
 
 ### MIDI device selection
 
@@ -321,10 +367,12 @@ the global `--device` option; indices may change between connections:
   --map "03 Claps":D --tag CLAP --range 1:2 --from-slot 1 --dry-run
 ```
 
-The index must be a non-negative integer. It is used for all batch CLI
-operations and sessions and checked against device enumeration before any
-write. Dry-run displays the index but does not connect to MIDI. If omitted,
-the historical default is 1; do not assume it identifies the Digitakt.
+- The index must be a non-negative integer.
+- It is used for all batch CLI operations and sessions.
+- It is checked against device enumeration before any write.
+- Dry-run displays the index but does not connect to MIDI.
+
+If omitted, the historical default is 1: **do not assume it identifies the Digitakt.**
 
 This option does not change the separate individual wrapper's device handling.
 
@@ -361,11 +409,16 @@ The preview lists source paths/ranks, sound names, tags, slots and remote
 sample paths. **Only `--dry-run` guarantees no MIDI connection or hardware
 write. Without it, execution is the default.**
 
-The script checks that the configured MIDI index is the Digitakt pair,
-inventories target slots and
-requires the exact interactive answer `YES` before any write (`OUI` is also
-accepted for compatibility). Refusal or EOF
-cancels. Occupied slots are listed and will be replaced after confirmation.
+Before any write, the script:
+
+1. Checks that the configured MIDI index is the Digitakt pair.
+2. Inventories target slots.
+3. Requires the exact interactive answer `YES` (`OUI` is also accepted
+   for compatibility).
+
+Refusal or EOF cancels.
+
+Occupied slots are listed and will be replaced after confirmation.
 
 There is no automatic backup. Each sound is generated before clearing only
 its target slot, then uploaded.
@@ -373,7 +426,9 @@ its target slot, then uploaded.
 **There is no automatic download after upload.**
 
 Success means that sample metadata and clear/upload MIDI responses succeeded,
-not that tags, audio or all parameters were read back. Inspect tags and load
+not that tags, audio or all parameters were read back.
+
+Inspect tags and load
 representative sounds on tracks for a separate hardware check.
 
 Transfer errors are recorded and queued for the final retry pass described
@@ -402,21 +457,31 @@ No separate clear/download CLI connection is opened during this session.
 This avoids both per-sound reconnect delays and the competing connection
 sequence problem observed previously.
 
-After a transfer error, the batch records the slot, phase and error, then
-continues. A successful transfer resets the consecutive-failure counter.
+### Failures and final retry
+
+After a transfer error, the batch records the slot, phase and error, then continues.
+
+A successful transfer resets the consecutive-failure counter.
 
 Ten consecutive failures stop execution immediately, without starting or
 continuing the final retry pass. The counter carries over between passes.
 
 Otherwise, each failed transfer gets one final attempt, starting at its failed
-phase. A confirmed clear is not repeated if the sound upload failed.
+phase.
+
+A confirmed clear is not repeated if the sound upload failed.
 
 The final summary lists completed, recovered, failed and unexecuted slots.
 Unresolved failures or unexecuted slots produce a nonzero exit status.
 
 There is no rollback: earlier writes remain, and a failed slot may be empty
-or partially modified. Initial connection and directory preparation remain
-blocking prerequisites; disconnected sessions are not automatically reopened.
+or partially modified.
+
+Initial connection and directory preparation remain blocking prerequisites.
+
+Disconnected sessions are not automatically reopened.
+
+### Offline validation
 
 Existing offline tests cover retry limits, clear/upload ordering, failures, multiple sounds without CLI
 connections and strict slot path validation. Rebuild `src/elektroid-cli` before
