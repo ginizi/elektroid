@@ -44,9 +44,9 @@ def parse_args(argv=None):
         description='Build Digitakt I sound banks',
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog='Example usage:\n'
-               '  ./dt-build-banks "/path/to/sample-library" \\\n'
+               '  ./scripts/dt-build-banks "/path/to/sample-library" \\\n'
                '    -m "Claps folder":D --tag CLAP -r 1:10 -f 1 -n\n\n'
-               '  ./dt-build-banks "/path/to/sample-library" \\\n'
+               '  ./scripts/dt-build-banks "/path/to/sample-library" \\\n'
                '    -m "Claps folder":D --tag CLAP -r 1:10 -f 1 \\\n'
                '    -m "Snares folder":B --tag SNARE -l 10 -f 20 -n\n\n'
                '  Replace "Claps folder" and "Snares folder" with your\n'
@@ -108,7 +108,7 @@ def main(argv=None):
     except CapacityError as exc:
         if args.maps or args.folder:
             raise
-        command = shlex.join(['./dt-build-banks', str(root), '--limit', '256',
+        command = shlex.join(['./scripts/dt-build-banks', str(root), '--limit', '256',
                               '--device', str(args.device), '-n'])
         raise SystemExit(f'{exc}\nPreview up to 256 WAVs per default bank from slot 1:\n'
                          f'  {command}') from None
