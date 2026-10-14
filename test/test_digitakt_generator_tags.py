@@ -69,19 +69,20 @@ class SoundTagsTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             (root / "src").mkdir()
-            shutil.copy(ROOT / "dt-make-sound", root / "dt-make-sound")
+            (root / 'scripts').mkdir()
+            shutil.copy(ROOT / "scripts/dt-make-sound", root / "scripts/dt-make-sound")
             shutil.copytree(ROOT / 'digitakt', root / 'digitakt',
                             ignore=shutil.ignore_patterns('__pycache__'))
             if (ROOT / 'dt_sound_defaults.py').exists():
                 shutil.copy(ROOT / 'dt_sound_defaults.py', root / 'dt_sound_defaults.py')
-            for path in [root / "src/elektroid-cli", root / "dt-sample-meta"]:
+            for path in [root / "src/elektroid-cli", root / "scripts/dt-sample-meta"]:
                 path.write_text("#!/bin/sh\nprintf 'ID=0000021F\\nSIZE=35172\\nHASH=386982B5\\n'\n")
                 path.chmod(0o755)
             template = root / "template.data"
             template.write_bytes(self.generate("01 Kicks"))
             for tag, value in [("SNARE", 2), ("FAVOURITE", 0x80000000)]:
                 result = subprocess.run(
-                    ["bash", str(root / "dt-make-sound"),
+                    ["bash", str(root / "scripts/dt-make-sound"),
                      "13:/sample", "B", "1", "01_SNARE", tag],
                     cwd=root, capture_output=True, text=True)
                 self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
@@ -94,20 +95,21 @@ class SoundTagsTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             (root / 'src').mkdir()
-            shutil.copy(ROOT / 'dt-sample-info', root / 'dt-sample-info')
+            (root / 'scripts').mkdir()
+            shutil.copy(ROOT / 'scripts/dt-sample-info', root / 'scripts/dt-sample-info')
             cli = root / 'src/elektroid-cli'
             cli.write_text('''#!/bin/sh
 [ "$1" = "elektron:sample:sample-info" ] || exit 25
 printf 'id=543\\nsize=35172\\nhash=386982b5\\n'
 ''')
             cli.chmod(0o755)
-            result = subprocess.run(['bash', str(root / 'dt-sample-info'), '13:/sample'],
+            result = subprocess.run(['bash', str(root / 'scripts/dt-sample-info'), '13:/sample'],
                                     capture_output=True, text=True)
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertEqual(result.stdout,
                              'SAMPLE_INFO id=0000021f size=35172 hash=386982b5\n')
             cli.write_text('#!/bin/sh\nexit 23\n')
-            result = subprocess.run(['bash', str(root / 'dt-sample-info'), '13:/sample'],
+            result = subprocess.run(['bash', str(root / 'scripts/dt-sample-info'), '13:/sample'],
                                     capture_output=True, text=True)
             self.assertEqual(result.returncode, 23)
             self.assertEqual(result.stdout, '')

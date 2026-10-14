@@ -2,7 +2,7 @@
 
 set -eu
 
-BASE="$(cd "$(dirname "$0")" && pwd)"
+BASE="$(cd "$(dirname "$0")/.." && pwd)"
 CLI="$BASE/src/elektroid-cli"
 
 if [ "$#" -ne 1 ]; then

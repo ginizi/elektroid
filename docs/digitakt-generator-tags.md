@@ -2,11 +2,11 @@
 
 The experimental generators use built-in Digitakt I sound parameters and require no template file or template argument. Tag values were verified on firmware 1.53.
 The shared `dt_sound_defaults.py` module contains the hardware-validated A007 model as immutable bytes and returns an independent validated copy. This is an internal model, not a complete decoded specification or a claim to match factory INIT settings.
-The generators replace its name, tags, file index and sample references and recalculate the CRC. Keep the module beside the scripts.
+The generators replace its name, tags, file index and sample references and recalculate the CRC. Keep `dt_sound_defaults.py` at the repository root.
 
 ## Python organization
 
-Both commands are thin entry points. Keep the `digitakt/` package beside them; no installation framework or new Python dependency is required.
+The commands in `scripts/` are thin entry points. Keep the `digitakt/` package at the repository root; no installation framework or new Python dependency is required.
 
 | Module | Responsibility |
 | --- | --- |
@@ -34,7 +34,7 @@ Without `--map`, tags retain their historical source-category mapping: closed an
 The individual generator now requires an explicit tag:
 
 ```sh
-./dt-make-sound SAMPLE_PATH B 1 01_SNARE SNARE
+./scripts/dt-make-sound SAMPLE_PATH B 1 01_SNARE SNARE
 ```
 
 Quote tags containing spaces. Add `--upload` only after checking the generated file, device, destination slot and backup.
@@ -73,7 +73,7 @@ This distinction is also explained in `--help`.
 `--help` includes a complete example with a placeholder library path:
 
 ```sh
-./dt-build-banks "/path/to/sample-library" \
+./scripts/dt-build-banks "/path/to/sample-library" \
   -m "Claps folder":D --tag CLAP -r 1:10 -f 1 -n
 ```
 
@@ -81,7 +81,7 @@ Replace `/path/to/sample-library` with your ROOT directory, containing the `Clap
 `-m` / `--map` can be repeated to combine several selections in one command; `--help` also includes this example:
 
 ```sh
-./dt-build-banks "/path/to/sample-library" \
+./scripts/dt-build-banks "/path/to/sample-library" \
   -m "Claps folder":D --tag CLAP -r 1:10 -f 1 \
   -m "Snares folder":B --tag SNARE -l 10 -f 20 -n
 ```
@@ -113,9 +113,9 @@ Paths in the static `--help` examples remain placeholders.
 
 ```sh
 # Preview all selected slots first.
-./dt-build-banks "/path/to/sample-library" --limit 256 --device INDEX -n
+./scripts/dt-build-banks "/path/to/sample-library" --limit 256 --device INDEX -n
 # Write only after reviewing the preview; confirmation is required.
-./dt-build-banks "/path/to/sample-library" --limit 256 --device INDEX
+./scripts/dt-build-banks "/path/to/sample-library" --limit 256 --device INDEX
 ```
 
 Filling all 2,048 slots requires 256 eligible WAVs per category after filters (including the historical cowbell filter for `10 Percussion`). Samples are not repeated: categories with fewer files leave the remaining slots unchanged.
@@ -143,7 +143,7 @@ Successful retries retain the previous error for diagnosis. Updates replace the 
 A report write failure stops execution to avoid losing the audit trail; this does not undo device writes already made. Forced process termination can leave the latest device operation absent from the report.
 
 ```sh
-./dt-build-banks ROOT -m "03 Claps":D --tag CLAP -n --report ./claps-plan.csv
+./scripts/dt-build-banks ROOT -m "03 Claps":D --tag CLAP -n --report ./claps-plan.csv
 ```
 
 ### Mapping rules and examples
@@ -151,7 +151,7 @@ A report write failure stops execution to avoid losing the audit trail; this doe
 `--folder` has no short alias. For example, preview without MIDI:
 
 ```sh
-./dt-build-banks ROOT -d 13 \
+./scripts/dt-build-banks ROOT -d 13 \
   -m "03 Claps":D --tag CLAP -r 1:10 -f 1 \
   -m "02 Snares":B --tag SNARE -l 10 -f 20 -n -v
 ```
@@ -159,7 +159,7 @@ A report write failure stops execution to avoid losing the audit trail; this doe
 Use repeatable `--map "FOLDER":BANK` groups to choose each destination:
 
 ```sh
-./dt-build-banks ROOT \
+./scripts/dt-build-banks ROOT \
   --map "03 Claps":A --tag CLAP --range 1:10 --from-slot 10 \
   --map "02 Snares":D --tag SNARE --range 1:10 --from-slot 20 \
   --dry-run
@@ -182,7 +182,7 @@ Paths are relative to ROOT or absolute, with unrestricted directory names. Each 
 `--tag` is not accepted without `--map`. All WAVs in a mapped folder are eligible: there is no implicit cowbell filter, even for a folder named `10 Percussion`.
 
 ```sh
-./dt-build-banks "/path/to/sample-library" \
+./scripts/dt-build-banks "/path/to/sample-library" \
   -m "My textures":H --tag TEXTURE \
   -m "Vintage effects":A --tag "SOUND FX" -n
 ```
@@ -195,14 +195,14 @@ In help examples, `"Claps folder":D` and `"Snares folder":B` refer to directorie
 List banks A-H (256 slots each) and historical default mappings without ROOT, MIDI access or file writes:
 
 ```sh
-./dt-build-banks --list-banks
+./scripts/dt-build-banks --list-banks
 ```
 
 Default assignments apply only without explicit mappings. With `--map`, any bank can receive any tag.
 List all tags without a sample root, MIDI connection or file writes:
 
 ```sh
-./dt-build-banks --list-tags
+./scripts/dt-build-banks --list-tags
 ```
 
 All 32 validated Digitakt I tags are supported (listed by `--list-tags`):
@@ -253,7 +253,7 @@ This changes display only, not selection or MIDI operations. **`--dry-run` remai
 Run `./src/elektroid-cli ld` and identify the exact `Elektron Digitakt :: Elektron Digitakt` pair. Pass its current index using the global `--device` option; indices may change between connections:
 
 ```sh
-./dt-build-banks ROOT --device 13 \
+./scripts/dt-build-banks ROOT --device 13 \
   --map "03 Claps":D --tag CLAP --range 1:2 --from-slot 1 --dry-run
 ```
 
@@ -270,13 +270,13 @@ If omitted, the historical default is 1: **do not assume it identifies the Digit
 Preview the first ten snares without opening MIDI:
 
 ```sh
-./dt-build-banks ROOT --folder '02 Snares' --limit 10 --dry-run
+./scripts/dt-build-banks ROOT --folder '02 Snares' --limit 10 --dry-run
 ```
 
 Select source ranks 21–40 and place them in D100–D119:
 
 ```sh
-./dt-build-banks ROOT --folder '02 Snares:21:40' \
+./scripts/dt-build-banks ROOT --folder '02 Snares:21:40' \
   --bank D --start-slot 100 --dry-run
 ```
 

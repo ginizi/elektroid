@@ -20,7 +20,7 @@ def main():
     if not 1 <= args.slot <= 256:
         parser.error('slot must be between 1 and 256')
     metadata = dict(line.split('=', 1) for line in
-                    cmd([BASE / 'dt-sample-meta', args.sample_path]).splitlines())
+                    cmd([BASE / 'scripts/dt-sample-meta', args.sample_path]).splitlines())
     data = generate_sound(args.bank, args.slot, args.name, int(metadata['ID'], 16),
                           int(metadata['SIZE']), int(metadata['HASH'], 16), args.tag)
     output = Path(f'{args.bank}{args.slot:03d}_{args.name}.data')
