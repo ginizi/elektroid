@@ -90,6 +90,48 @@ Short and long options may be mixed without changing selection groups:
 | `-s` | `--start-slot` (legacy) |
 | `-h` | `--help` |
 
+`-n` / `--dry-run` previews planned transfers without a MIDI connection or
+writes. Without this option, transfers execute after confirmation. This
+distinction is also explained in `--help`.
+
+`--help` includes a complete example with a placeholder library path:
+
+```sh
+./dt-build-banks "/path/to/sample-library" \
+  -m "03 Claps:D" -r 1:10 -f 1 -n
+```
+
+Replace `/path/to/sample-library` with your ROOT directory, containing the
+`03 Claps` folder in this example.
+
+`-m` / `--map` can be repeated to combine several selections in one command;
+`--help` also includes this example:
+
+```sh
+./dt-build-banks "/path/to/sample-library" \
+  -m "03 Claps:D" -r 1:10 -f 1 \
+  -m "02 Snares:B" -l 10 -f 20 -n
+```
+
+Selection options `-r`, `-l` and `-f` apply to the preceding mapping until the
+next `-m` / `--map`, so each group can have its own range, limit and start slot.
+
+To populate banks A-H using the default category mappings, first find the
+current Digitakt MIDI index with `./src/elektroid-cli ld`. Replace `INDEX`:
+
+```sh
+# Preview all selected slots first.
+./dt-build-banks "/path/to/sample-library" --limit 256 --device INDEX -n
+# Write only after reviewing the preview; confirmation is required.
+./dt-build-banks "/path/to/sample-library" --limit 256 --device INDEX
+```
+
+Filling all 2,048 slots requires 256 eligible WAVs per category after filters
+(including the historical cowbell filter for `10 Percussion`). Samples are
+not repeated: categories with fewer files leave the remaining slots unchanged.
+Target slots are cleared and overwritten, with no automatic backup. A complete
+A-H hardware fill has not been validated.
+
 ### Transfer report
 
 Every invocation with a non-empty plan creates a new CSV report in
