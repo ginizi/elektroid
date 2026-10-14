@@ -278,6 +278,150 @@ cli_sample_info (int argc, gchar *argv[], int *optind)
   return EXIT_SUCCESS;
 }
 
+
+/*
+ * Retrieve metadata for multiple samples using one MIDI connection.
+ *
+ * All arguments are validated before connecting. Output is buffered
+ * so that a failed request does not produce an incomplete TSV result.
+ */
+static gint
+cli_sample_info_batch (int argc, gchar *argv[], int *optind)
+{
+  const gchar *device_path;
+  const gchar *separator;
+  const gchar *p;
+  const gchar *sample_path;
+  struct sample_metadata metadata;
+  GString *output;
+  guint64 device_id = 0;
+  guint64 current_id;
+  gint err;
+  gint i;
+  gchar *end;
+
+  if (*optind >= argc)
+    {
+      error_print ("Missing sample paths");
+      return EXIT_FAILURE;
+    }
+
+  /*
+   * Validate every argument before opening the MIDI connection.
+   * The same device must be used for all requested samples.
+   */
+  for (i = *optind; i < argc; i++)
+    {
+      device_path = argv[i];
+      separator = strchr (device_path, ':');
+
+      if (!separator || separator == device_path ||
+          separator[1] != '/' || !separator[2])
+        {
+          error_print ("Expected device_number:path_to_file");
+          return EXIT_FAILURE;
+        }
+
+      for (p = device_path; p < separator; p++)
+        {
+          if (!g_ascii_isdigit (*p))
+            {
+              error_print ("Expected device_number:path_to_file");
+              return EXIT_FAILURE;
+            }
+        }
+
+      errno = 0;
+      current_id = g_ascii_strtoull (device_path, &end, 10);
+
+      if (errno || end != separator || current_id > G_MAXINT)
+        {
+          error_print ("Expected device_number:path_to_file");
+          return EXIT_FAILURE;
+        }
+
+      /*
+       * Tabs and line breaks would corrupt the TSV output.
+       * Reject them rather than emitting ambiguous records.
+       */
+      if (strpbrk (separator + 1, "\t\r\n"))
+        {
+          error_print ("Sample paths cannot contain tabs or newlines");
+          return EXIT_FAILURE;
+        }
+
+      if (i == *optind)
+        {
+          device_id = current_id;
+        }
+      else if (current_id != device_id)
+        {
+          error_print ("All sample paths must use the same device");
+          return EXIT_FAILURE;
+        }
+    }
+
+  /*
+   * Connect exactly once, using the first validated device path.
+   */
+  err = cli_connect (argv[*optind]);
+
+  if (err)
+    {
+      return err;
+    }
+
+  if (!fs_ops || !fs_ops->get_sample_metadata)
+    {
+      error_print ("Sample metadata not supported by this filesystem");
+      return -ENOSYS;
+    }
+
+  output = g_string_new ("path\tid\tsize\thash\n");
+
+  for (i = *optind; i < argc; i++)
+    {
+      device_path = argv[i];
+      separator = strchr (device_path, ':');
+
+      /*
+       * cli_get_path() returns the path representation expected
+       * by the existing Elektron filesystem operation.
+       */
+      sample_path = cli_get_path (device_path);
+
+      err = fs_ops->get_sample_metadata (
+          &backend, sample_path, &metadata);
+
+      if (err)
+        {
+          error_print ("Cannot retrieve metadata for '%s'",
+                       separator + 1);
+          g_string_free (output, TRUE);
+          return err;
+        }
+
+      /*
+       * Display the original absolute path, including its leading
+       * slash, while using the connector-specific path for MIDI.
+       */
+      g_string_append_printf (
+          output,
+          "%s\t%" G_GUINT32_FORMAT
+          "\t%" G_GUINT32_FORMAT
+          "\t%08x\n",
+          separator + 1,
+          metadata.id,
+          metadata.size,
+          (guint) metadata.hash);
+    }
+
+  fputs (output->str, stdout);
+  g_string_free (output, TRUE);
+
+  return EXIT_SUCCESS;
+}
+
 static void
 cli_print_item (struct item_iterator *iter, struct backend *backend,
 		const struct fs_operations *fs_ops)
@@ -1214,6 +1358,9 @@ cli_print_help (const gchar *argv0)
 		      "List directory");
   cli_print_help_cmd ("sample-info", "device_number:path_to_file",
                       "Show sample ID, size and hash");
+  cli_print_help_cmd ("sample-info-batch",
+                      "device_number:path_to_file [ more_paths ... ]",
+                      "Show metadata for multiple samples as TSV");
   cli_print_help_cmd ("mkdir", "device_number:path_to_directory",
 		      "Create directory and its parent directories as needed");
   cli_print_help_cmd ("rmdir", "device_number:path_to_directory",
@@ -1354,6 +1501,10 @@ main (int argc, gchar *argv[])
       else if (!strcmp (op, "sample-info"))
 	{
 	  err = cli_sample_info (argc, argv, &optind);
+	}
+      else if (!strcmp (op, "sample-info-batch"))
+	{
+	  err = cli_sample_info_batch (argc, argv, &optind);
 	}
       else if (!strcmp (op, "mkdir"))
 	{
