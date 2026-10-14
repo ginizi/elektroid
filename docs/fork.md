@@ -7,6 +7,24 @@ The upstream application's features, installation instructions and license
 are preserved below. These additions are not an official upstream release;
 the generator is intended to remain a fork-specific workflow.
 
+### Generate and send sounds directly to Digitakt I
+
+You can turn local WAV samples into tagged Digitakt I sounds and **send them
+directly to the device's +Drive sound banks**, without manually importing each
+sound. The workflow uploads the samples to +Drive, generates sounds referencing
+those samples, and writes the sounds to the bank slots you select.
+
+- Send a single sound to a chosen slot, or a selection of sounds.
+- Fill one or several banks **A–H**, with up to **256 sounds per bank**.
+- Populate all eight banks (**2,048 sounds**) using the historical category
+  mapping, provided each category has 256 eligible WAVs after filtering.
+- Combine freely named sample folders, explicit tags and destination banks
+  in one command; preview the complete plan before sending anything.
+
+There is no automatic repetition or overflow into other banks. Uploading
+sounds does not load them into a project's tracks. Destination sound slots
+are overwritten: see the safety instructions below before any transfer.
+
 ### Build and requirements
 
 Install the dependencies in the [installation section](#dependencies) below,
