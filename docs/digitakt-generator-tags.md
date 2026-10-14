@@ -29,8 +29,12 @@ The configuration is passed explicitly: parsing `--device` does not mutate
 a global device value. Execution accepts a command runner and session factory
 for offline tests. The session is a context manager and closes on success,
 failure or interruption. The batch has one pass, no retry and no automatic
-download. Progress uses compact lines without clearing the terminal; ETA is
-an indicative average, not a promise.
+download. Progress shows conversion, WAV upload, metadata, generation and
+clear/sound-upload timings, elapsed/remaining time and estimated finish.
+The dashboard refreshes an interactive terminal; redirected output contains
+plain snapshots without terminal escape sequences. ETA is an indicative
+average, not a promise. Elapsed time covers processed jobs, excluding preflight
+and the confirmation delay.
 
 Binary generation is shared instead of duplicated in shell-embedded Python.
 The existing CLI arguments and destructive confirmation remain unchanged;
