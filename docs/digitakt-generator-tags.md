@@ -51,7 +51,8 @@ slot and backup.
 Without it, generation does not
 upload the sound; sample metadata retrieval still opens a MIDI connection.
 The existing individual wrapper's hard-coded device handling is unchanged.
-The four-byte big-endian tag field is at payload offset 8 (file offset 39). It is replaced before recalculating the CRC. Template tags are not retained.
+The four-byte big-endian tag field is at payload offset 8 (file offset 39). It is replaced before recalculating the CRC.
+Template tags are not retained.
 The built-in model is uncompressed; there is no new LZ4 dependency.
 Run offline regression tests with:
 
