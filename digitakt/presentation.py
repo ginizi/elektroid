@@ -23,22 +23,23 @@ def format_slot_ranges(slots):
 
 
 def print_plan(jobs, summary, verbose=False, device='1'):
-    print('\nWRITE PLAN')
-    print(f'MIDI index: {device} (checked only when executing)\n')
-    print(f"{'BANK':<8}{'SLOTS':<12}{'COUNT':>5}  {'TAG':<12}FOLDER")
-    for bank, label, count, folder, remote, first, last in summary:
-        tag = TAG_NAMES[FOLDER_TAGS[folder.name]]
-        slots = f'{first:03d}' if first == last else f'{first:03d}–{last:03d}'
-        print(f'{bank:<8}{slots:<12}{count:>5}  {tag:<12}{folder.name}')
-    print(f'\nTotal: {len(jobs)} sounds')
-    print('Destinations: ' + format_slot_ranges(f"{j['bank']}{j['slot']:03d}" for j in jobs))
-    if verbose:
-        print('\nFILES')
-        for job in jobs:
-            print(f"{job['wav']} (rank {job['source_rank']}) -> "
-                  f"{job['bank']}{job['slot']:03d} {job['slot']:02d}_{job['label']} "
-                  f"tag={TAG_NAMES[FOLDER_TAGS[job['source_folder']]]} "
-                  f"sample=/{job['remote']}/{job['remote_name']}")
+    print('\nDESTINATION BANKS')
+    banks = dict.fromkeys(job['bank'] for job in jobs)
+    for bank in banks:
+        bank_jobs = [job for job in jobs if job['bank'] == bank]
+        slots = format_slot_ranges(f"{bank}{job['slot']:03d}" for job in bank_jobs)
+        print(f'\nBANK {bank} — slots {slots} — {len(bank_jobs)} sounds')
+        print(f"{'SLOT':<7}{'TAG':<13}SOURCE FILE")
+        for job in bank_jobs:
+            tag = TAG_NAMES[FOLDER_TAGS[job['source_folder']]]
+            print(f"{bank}{job['slot']:03d}   {tag:<13}{job['wav'].name}")
+            if verbose:
+                print(f"       Source: {job['wav']} (rank {job['source_rank']})")
+                print(f"       Sound: {job['slot']:02d}_{job['label']}")
+                print(f"       +Drive WAV: /{job['remote']}/{job['remote_name']}")
+    bank_label = 'bank' if len(banks) == 1 else 'banks'
+    print(f'\nTotal: {len(jobs)} sounds across {len(banks)} {bank_label}')
+    print(f'MIDI index: {device} (checked only when executing)')
 
 
 def confirm_execution(jobs, occupied):
