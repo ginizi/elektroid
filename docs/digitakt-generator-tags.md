@@ -31,8 +31,10 @@ for offline tests. The session is a context manager and closes on success,
 failure or interruption. The batch collects failed transfers and retries them
 once at the end, without automatic download. Progress shows elapsed/remaining
 time and estimated finish.
+
 With `--verbose`, it also shows conversion, WAV upload, metadata, generation
 and clear/sound-upload timings and the measured phase total.
+
 The dashboard refreshes an interactive terminal; redirected output contains
 plain snapshots without terminal escape sequences. ETA is an indicative
 average, not a promise. Elapsed time covers processed jobs, excluding preflight
@@ -43,7 +45,9 @@ The destructive confirmation remains unchanged;
 the individual wrapper still has its legacy upload device handling.
 
 `dt-build-banks` replaces inherited tags with the explicit `--tag` of each
-`--map` group, independently of folder name and destination bank. Without
+`--map` group, independently of folder name and destination bank.
+
+Without
 `--map`, tags retain their historical source-category mapping: closed and open
 hats use `HI-HAT`, and `10 Percussion` uses `PERCUSSION` with a cowbell filename
 filter. Legacy categories remain restricted; mapping folder names are free.
@@ -57,10 +61,12 @@ The individual generator now requires an explicit tag:
 Quote tags containing spaces. Add `--upload` only after checking the generated
 file, device, destination slot and backup. Without it, generation does not
 upload the sound; sample metadata retrieval still opens a MIDI connection.
+
 The existing individual wrapper's hard-coded device handling is unchanged.
 
 The four-byte big-endian tag field is at payload offset 8 (file offset 39).
 It is replaced before recalculating the CRC. Template tags are not retained.
+
 The built-in model is uncompressed; there is no new LZ4 dependency.
 
 Run offline regression tests with:
@@ -129,7 +135,9 @@ and also lists it in `--help`.
 
 If a selection exceeds capacity, the diagnostic names the source folder,
 eligible WAV count, selected count, destination bank and available slot range.
+
 The entire command is cancelled before any transfer, including to other banks.
+
 Use `--limit 256` to select up to 256 WAVs per default bank, or use explicit
 mappings and smaller ranges. A later starting slot requires a smaller limit.
 
@@ -149,6 +157,7 @@ the static `--help` examples remain placeholders.
 Filling all 2,048 slots requires 256 eligible WAVs per category after filters
 (including the historical cowbell filter for `10 Percussion`). Samples are
 not repeated: categories with fewer files leave the remaining slots unchanged.
+
 Target slots are cleared and overwritten, with no automatic backup. A complete
 A-H hardware fill has not been validated.
 
@@ -161,13 +170,17 @@ an existing file is never overwritten when starting a run.
 The report maps each bank/slot to the exact generated sound name, absolute WAV
 source path, sample path on the +Drive, verified tag and generated `.data` path.
 It also records status, attempt count, phase and the last failure message.
+
 The name is the generated name, not a readback of the previously occupied slot.
 
 With `-n`, rows are `planned`; no MIDI connection is opened. During execution,
 rows start as `not_executed` and become `successful`, `failed` or `recovered`
 after each attempt. Ctrl-C during a transfer records `interrupted` when possible.
+
 Successful retries retain the previous error for diagnosis. Updates replace
-the report atomically. A report write failure stops execution to avoid losing
+the report atomically.
+
+A report write failure stops execution to avoid losing
 the audit trail; this does not undo device writes already made. Forced process
 termination can leave the latest device operation absent from the report.
 
@@ -195,12 +208,15 @@ Use repeatable `--map "FOLDER":BANK` groups to choose each destination:
 This places claps in A010–A019 and snares in D020–D029. Every `--map`
 starts a new group. Following `--tag`, `--range`, `--limit` and `--from-slot`
 options belong to that group until the next `--map`. `--dry-run` is global.
+
 The default range is the whole folder and the default destination start is 1.
 A group's limit applies after its inclusive source range.
 
 Paths are relative to ROOT or absolute, with unrestricted directory names.
+
 Each mapping requires one explicit `--tag`; missing, invalid or duplicate tags
 are rejected before MIDI. Tag input is case-insensitive. Quote tags with spaces.
+
 `--tag` is not accepted without `--map`. All WAVs in a mapped folder are eligible:
 there is no implicit cowbell filter, even for a folder named `10 Percussion`.
 
@@ -234,20 +250,25 @@ List all tags without a sample root, MIDI connection or file writes:
 ```
 
 All 32 validated Digitakt I tags are supported (listed by `--list-tags`):
+
 KICK, SNARE, RIMSHOT, CLAP, TOM, PERCUSSION, HI-HAT, CYMBAL, COWBELL, SYNTH,
 BASS, LEAD, PAD, TEXTURE, CHORD, SOUND FX, ELECTRONIC, METALLIC, ACOUSTIC,
 ATMOSPHERIC, NOISY, GLITCH, HARD, SOFT, DARK, BRIGHT, VINTAGE, EPIC, FAIL,
-LOOP, MINE, FAVOURITE. Only one tag per group is supported; combinations have
+LOOP, MINE, FAVOURITE.
+
+Only one tag per group is supported; combinations have
 not been hardware-validated.
 
 Known category folders retain their historical +Drive directories. Free-name
 folders use `mapped_<sanitized-name>-<path-hash>` directories, separating folders
 with identical basenames. Moving a folder changes its path hash and destination.
+
 Mapped sound names use the slot number and an ASCII tag label shortened to fit
 the 15-character sound-name limit. The report records the exact name and paths.
 
 Groups must not overlap destination slots, repeat source files, or collide
 on remote sample names. Capacity is checked for every group before MIDI.
+
 Options duplicated within a group or placed before its `--map` are rejected;
 a legacy global `--limit` cannot be combined with mappings.
 
@@ -255,7 +276,9 @@ Do not mix `--map` with legacy `--folder`, `--bank` or `--start-slot`.
 The legacy syntax below remains supported for compatibility.
 
 **Remove `--dry-run` only when ready to clear and replace the displayed slots
-after answering `YES`. There is no automatic backup.** The configured MIDI
+after answering `YES`. There is no automatic backup.**
+
+The configured MIDI
 device index still needs to match the Digitakt pair.
 
 ### Compact preview
@@ -264,8 +287,10 @@ The preview starts with destination banks in mapping order. Each bank shows
 its exact slot ranges and every source filename next to its destination slot
 and actual tag, including without `--verbose`. The total count and MIDI index
 follow the bank/file listing.
+
 The confirmation summarizes occupied and target slots without listing every
 slot. Non-contiguous ranges remain separate; no gaps are implied to be cleared.
+
 Add the global `--verbose` flag to display full source paths, source ranks,
 sound names and +Drive WAV destinations. This changes display only, not selection
 or MIDI operations. `--dry-run` remains necessary to avoid execution.
@@ -285,6 +310,7 @@ The index must be a non-negative integer. It is used for all batch CLI
 operations and sessions and checked against device enumeration before any
 write. Dry-run displays the index but does not connect to MIDI. If omitted,
 the historical default is 1; do not assume it identifies the Digitakt.
+
 This option does not change the separate individual wrapper's device handling.
 
 ### Legacy selection syntax
@@ -318,17 +344,24 @@ sounds, or choose a start no greater than 227.
 
 The preview lists source paths/ranks, sound names, tags, slots and remote
 sample paths. **Only `--dry-run` guarantees no MIDI connection or hardware
-write. Without it, execution is the default.** The script checks that the
+write. Without it, execution is the default.**
+
+The script checks that the
 configured MIDI index is the Digitakt pair, inventories target slots and
 requires the exact interactive answer `YES` before any write (`OUI` is also
 accepted for compatibility). Refusal or EOF
 cancels. Occupied slots are listed and will be replaced after confirmation.
 
 There is no automatic backup. Each sound is generated before clearing only
-its target slot, then uploaded. **There is no automatic download after upload.**
+its target slot, then uploaded.
+
+**There is no automatic download after upload.**
+
 Success means that sample metadata and clear/upload MIDI responses succeeded,
 not that tags, audio or all parameters were read back. Inspect tags and load
-representative sounds on tracks for a separate hardware check. On a transfer
+representative sounds on tracks for a separate hardware check.
+
+On a transfer
 error, processing stops and reports completed,
 failed and pending slots; the failed slot may be empty or partially modified.
 
@@ -351,18 +384,22 @@ uploads, metadata, targeted sound clears and sound uploads. `DATA_CL` accepts
 only `/soundbanks/A/1` through `/soundbanks/H/256`, never directories or
 metadata paths, and reuses the existing data filesystem delete operation.
 No separate clear/download CLI connection is opened during this session.
+
 This avoids both per-sound reconnect delays and the competing connection
 sequence problem observed previously.
 
 After a transfer error, the batch records the slot, phase and error, then
 continues. A successful transfer resets the consecutive-failure counter.
+
 Ten consecutive failures stop execution immediately, without starting or
 continuing the final retry pass. The counter carries over between passes.
+
 Otherwise, each failed transfer gets one final attempt, starting at its failed
 phase. A confirmed clear is not repeated if the sound upload failed.
 
 The final summary lists completed, recovered, failed and unexecuted slots.
 Unresolved failures or unexecuted slots produce a nonzero exit status.
+
 There is no rollback: earlier writes remain, and a failed slot may be empty
 or partially modified. Initial connection and directory preparation remain
 blocking prerequisites; disconnected sessions are not automatically reopened.
@@ -370,6 +407,7 @@ blocking prerequisites; disconnected sessions are not automatically reopened.
 Existing offline tests cover retry limits, clear/upload ordering, failures, multiple sounds without CLI
 connections and strict slot path validation. Rebuild `src/elektroid-cli` before
 using this script version: it needs the experimental session `DATA_CL` command.
+
 Hardware throughput still needs measurement; no fixed runtime is guaranteed.
 
 Run all offline generator tests with:
