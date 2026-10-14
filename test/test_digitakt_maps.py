@@ -69,17 +69,32 @@ class MapsTest(unittest.TestCase):
             generator.print_plan(jobs, summary)
         text = out.getvalue()
         self.assertIn('BANK', text)
-        self.assertIn('SLOTS', text)
+        self.assertIn('SLOT', text)
         self.assertIn('D010–D011', text)
         self.assertIn('D020–D021', text)
         self.assertNotIn('D010–D021', text)
         self.assertNotIn(str(self.root), text)
         self.assertIn('Total: 4 sounds', text)
+        self.assertIn('1.wav', text)
+        self.assertIn('5.wav', text)
+        self.assertIn('SOURCE FILE', text)
         out = io.StringIO()
         with redirect_stdout(out):
             generator.print_plan(jobs, summary, verbose=True)
         self.assertIn(str(self.root), out.getvalue())
         self.assertIn('rank 1', out.getvalue())
+
+    def test_destination_banks_before_device_in_mapping_order(self):
+        jobs, summary = generator.build_maps_plan(self.root, [
+            {'path': '03 Claps', 'bank': 'D', 'limit': 1},
+            {'path': '02 Snares', 'bank': 'B', 'limit': 1, 'from_slot': 20}])
+        out = io.StringIO()
+        with redirect_stdout(out):
+            generator.print_plan(jobs, summary)
+        text = out.getvalue()
+        self.assertLess(text.index('BANK D'), text.index('BANK B'))
+        self.assertLess(text.index('BANK B'), text.index('MIDI index'))
+        self.assertIn('Total: 2 sounds across 2 banks', text)
 
     def test_invalid_map_syntax(self):
         for value in ('03 Claps', ':A', '03 Claps:Z', '03 Claps:AA'):
