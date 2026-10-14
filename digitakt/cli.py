@@ -5,7 +5,7 @@ from pathlib import Path
 import time
 import uuid
 from .planning import (MapAction, MapOptionAction, parse_map, parse_range,
-                       parse_folder_spec, build_plan, build_maps_plan)
+                       parse_folder_spec, build_plan, build_maps_plan, DEFAULT_MAPPING_HELP)
 from .sound import create_default_sound, make_sound_data, FOLDER_TAGS, TAG_NAMES
 from .transport import Config, cmd, DTSession, verify_device
 from .transport import check_destinations as list_destinations
@@ -27,7 +27,7 @@ def parse_args(argv=None):
     parser = argparse.ArgumentParser(
         description='Build Digitakt I sound banks',
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog='Example usage:\n'
+        epilog=DEFAULT_MAPPING_HELP + '\n\nExample usage:\n'
                '  ./dt-build-banks "/path/to/sample-library" \\\n'
                '    -m "03 Claps:D" -r 1:10 -f 1 -n\n\n'
                '  ROOT is "/path/to/sample-library", containing the "03 Claps" folder.\n'
@@ -84,6 +84,9 @@ def main(argv=None):
     create_default_sound()
     if not CLI.is_file():
         raise SystemExit(f'elektroid-cli not found: {CLI}')
+    if not args.maps and not args.folder:
+        print('No --map/--folder provided: samples use category-based banks A-H.')
+        print(DEFAULT_MAPPING_HELP + '\n')
     jobs, summary = (build_maps_plan(root, args.maps) if args.maps else
                      build_plan(root, args.limit, args.folder, args.bank, args.start_slot))
     config = Config(CLI, str(args.device), BASE / 'generated_sounds')

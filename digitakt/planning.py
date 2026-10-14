@@ -15,6 +15,16 @@ BANKS = (
     ('H', 'CYMBAL', ('09 Cymbals',), '01_CYMBALS'),
 )
 
+DEFAULT_MAPPING_HELP = (
+    'Default mapping (without --map/--folder):\n'
+    '  A Kicks       B Snares      C Toms         D Claps\n'
+    '  E Cowbells    F Closed hats G Open hats    H Cymbals\n'
+    'Each category stays in its assigned bank (256 slots maximum).\n'
+    'Samples do not overflow into another bank. Missing folders are skipped.\n'
+    '"10 Percussion" uses the historical cowbell filter.\n'
+    '--limit applies per bank in this default mode.'
+)
+
 
 def natural_key(value):
     return [int(part) if part.isdigit() else part.casefold()
@@ -120,6 +130,7 @@ def plan_folder(folder, first, last, limit, bank=None, start=None):
     if not 1 <= start <= 256:
         raise SystemExit('First destination slot must be between 1 and 256')
     files = inventory(folder)
+    eligible = len(files)
     if not files:
         raise SystemExit(f'No selectable WAV files: {folder}')
     if first < 1 or (last is not None and last < first):
@@ -131,9 +142,17 @@ def plan_folder(folder, first, last, limit, bank=None, start=None):
         files = files[:limit]
     available = 257 - start
     if len(files) > available:
-        raise SystemExit(f'{len(files)} sounds requested, {available} slots available '
-                         f'({start}–256). Choose a starting slot ≤ '
-                         f'{257 - len(files)} or reduce the selection to {available} sounds.')
+        raise SystemExit(
+            f'The folder "{folder.name}" ({folder}) contains {eligible:,} eligible WAV files.\n'
+            f'This selection sends {len(files):,} files to bank {bank}, starting at slot {start}.\n'
+            f'Bank {bank} holds at most 256 sounds; {available} slots available '
+            f'({bank}{start:03d}–{bank}256). This selection exceeds its capacity.\n'
+            'The command was cancelled before any transfer, including to other banks.\n\n'
+            f'Reduce this selection to at most {available} WAVs with --limit {available}, '
+            'or choose a smaller --map/--range selection.\n'
+            'Without --map/--folder, --limit applies to each default bank.\n'
+            'Preview up to 256 WAVs per default bank from slot 1:\n'
+            '  ./dt-build-banks "/path/to/sample-library" --limit 256 -n')
     jobs = []
     for offset, wav in enumerate(files):
         name = wav.stem[:32].rstrip(' .')
