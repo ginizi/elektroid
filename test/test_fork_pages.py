@@ -7,6 +7,13 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class ForkPagesTest(unittest.TestCase):
+    def test_lockfile_checksums_are_complete(self):
+        text = (ROOT / 'docs/Gemfile.lock').read_text()
+        checksums = text.split('CHECKSUMS\n', 1)[1].split('\n\n', 1)[0]
+        for line in checksums.splitlines():
+            with self.subTest(entry=line):
+                self.assertRegex(line, r' sha256=[0-9a-f]{64}$')
+
     def test_site_identity(self):
         config = (ROOT / 'docs/_config.yml').read_text()
         self.assertIn('url: "https://ginizi.github.io"', config)
