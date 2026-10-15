@@ -12,6 +12,14 @@ from digitakt import cli
 
 
 class ShortOptionsTest(unittest.TestCase):
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.root = Path(self.temp.name)
+        output_base = patch.object(cli, 'BASE', self.root)
+        output_base.start()
+        self.addCleanup(output_base.stop)
+
     def test_output_base_is_temporary(self):
         self.assertEqual(cli.BASE, self.root)
 

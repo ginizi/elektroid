@@ -18,6 +18,9 @@ class MapsTest(unittest.TestCase):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name)
+        output_base = patch.object(generator, 'BASE', self.root)
+        output_base.start()
+        self.addCleanup(output_base.stop)
         for folder in ('03 Claps', '02 Snares'):
             path = self.root / folder
             path.mkdir()
