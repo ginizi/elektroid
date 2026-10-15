@@ -1,10 +1,17 @@
-title: Elektroid
+title: Digitakt I Sound Bank Generator — Elektroid fork
 author:
-  name: David García Goñi
-  email: "dagargo@gmail.com"
-description: Sample and MIDI device manager
-baseurl: "/elektroid/"
-url: "https://dagargo.github.io/elektroid/"
+  name: ginizi
+description: Generate tagged Digitakt I sounds from WAV samples, upload directly to sound banks and plan multi-bank transfers with this Elektroid fork.
+baseurl: "/elektroid"
+url: "https://ginizi.github.io"
+
+# Keep the upstream README source intact, but use the fork landing page online.
+exclude:
+  - index.md
+  - Gemfile
+  - Gemfile.lock
+  - Makefile
+  - fork.md
 
 # Build settings
 remote_theme: jekyll/minima
@@ -17,7 +24,7 @@ minima:
   social_links:
     - title: GitHub
       icon: github
-      url: "https://github.com/dagargo"
+      url: "https://github.com/ginizi/elektroid"
   nav_pages:
     - license.md
     - installation.md
