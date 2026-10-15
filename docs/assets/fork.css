@@ -1,0 +1,6 @@
+/* Keep mobile text left-aligned and preserve lists, headings and code. */
+@media (min-width: 48rem) {
+  .post-content > p {
+    text-align: justify;
+  }
+}

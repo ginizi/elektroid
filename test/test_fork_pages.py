@@ -7,6 +7,14 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class ForkPagesTest(unittest.TestCase):
+    def test_paragraph_justification_is_responsive(self):
+        css = (ROOT / 'docs/assets/fork.css').read_text()
+        self.assertIn('@media (min-width: 48rem)', css)
+        self.assertIn('.post-content > p', css)
+        self.assertIn('text-align: justify;', css)
+        head = (ROOT / 'docs/_includes/custom-head.html').read_text()
+        self.assertIn("'/assets/fork.css' | relative_url", head)
+
     def test_lockfile_checksums_are_complete(self):
         text = (ROOT / 'docs/Gemfile.lock').read_text()
         checksums = text.split('CHECKSUMS\n', 1)[1].split('\n\n', 1)[0]

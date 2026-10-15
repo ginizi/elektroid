@@ -119,7 +119,7 @@ Paths in the static `--help` examples remain placeholders.
 ```
 
 Filling all 2,048 slots requires 256 eligible WAVs per category after filters (including the historical cowbell filter for `10 Percussion`). Samples are not repeated: categories with fewer files leave the remaining slots unchanged.
-Target slots are cleared and overwritten, with no automatic backup. A complete A-H hardware fill has not been validated.
+Target slots are cleared and overwritten, with no automatic backup.
 
 ### Transfer report
 
