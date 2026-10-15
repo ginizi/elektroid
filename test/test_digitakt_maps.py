@@ -11,10 +11,16 @@ generator = tag_tests.generator
 
 
 class MapsTest(unittest.TestCase):
+    def test_output_base_is_temporary(self):
+        self.assertEqual(generator.BASE, self.root)
+
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name)
+        output_base = patch.object(generator, 'BASE', self.root)
+        output_base.start()
+        self.addCleanup(output_base.stop)
         for folder in ('03 Claps', '02 Snares'):
             path = self.root / folder
             path.mkdir()
