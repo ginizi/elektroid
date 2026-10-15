@@ -11,6 +11,9 @@ generator = tag_tests.generator
 
 
 class MapsTest(unittest.TestCase):
+    def test_output_base_is_temporary(self):
+        self.assertEqual(generator.BASE, self.root)
+
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)

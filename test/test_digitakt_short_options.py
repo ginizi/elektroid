@@ -12,6 +12,9 @@ from digitakt import cli
 
 
 class ShortOptionsTest(unittest.TestCase):
+    def test_output_base_is_temporary(self):
+        self.assertEqual(cli.BASE, self.root)
+
     def test_capacity_suggestion_uses_real_root_and_device(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory) / "User's sample library"
