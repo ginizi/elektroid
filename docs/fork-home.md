@@ -18,7 +18,7 @@ The generator targets **Digitakt I**, not Digitakt II, and does not require an e
 - Retry failed transfers once, with a stop after ten consecutive transfer failures.
 
 Samples are uploaded to +Drive and generated sounds reference those samples. Uploading a sound does not load it onto a project's tracks.
-There is no automatic repetition or rollover into another bank; filling all eight banks requires enough eligible samples in each selection. A complete A–H hardware fill has not been validated.
+There is no automatic repetition or rollover into another bank; filling all eight banks requires enough eligible samples in each selection.
 
 ## Get started safely
 
