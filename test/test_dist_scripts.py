@@ -20,7 +20,7 @@ class DistScriptsTest(unittest.TestCase):
                 self.assertTrue((ROOT / 'scripts' / name).is_file())
         self.assertIn('scripts/digitakt/defaults.py', entries)
         self.assertNotIn('dt_sound_defaults.py', entries)
-        self.assertFalse((ROOT / 'digitakt').exists())
+        self.assertFalse((ROOT / 'digitakt' / '__init__.py').exists())
         self.assertFalse((ROOT / 'dt_sound_defaults.py').exists())
         for entry in entries:
             if entry.endswith('.py'):

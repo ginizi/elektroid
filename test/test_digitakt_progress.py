@@ -4,7 +4,7 @@ from pathlib import Path
 import unittest
 from unittest.mock import Mock, patch
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))
 from digitakt.execution import process_job
 from digitakt.presentation import print_progress
 from digitakt.transport import Config
