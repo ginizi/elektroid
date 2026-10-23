@@ -5,7 +5,7 @@ from pathlib import Path
 from .sound import generate_sound, TAG_VALUES
 from .transport import cmd
 
-BASE = Path(__file__).resolve().parents[1]
+BASE = Path(__file__).resolve().parents[2]
 
 
 def main():

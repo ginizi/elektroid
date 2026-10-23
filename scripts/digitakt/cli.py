@@ -15,7 +15,7 @@ from .execution import execute_jobs, replace_sound
 from .presentation import print_plan, confirm_execution
 from .reporting import TransferReport
 
-BASE = Path(__file__).resolve().parents[1]
+BASE = Path(__file__).resolve().parents[2]
 CLI = BASE / 'src/elektroid-cli'
 DEVICE = '1'  # Compatibility default only; never changed by main().
 
