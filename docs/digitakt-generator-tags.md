@@ -1,12 +1,12 @@
 # Digitakt I generator tags
 
 The experimental generators use built-in Digitakt I sound parameters and require no template file or template argument. Tag values were verified on firmware 1.53.
-The shared `dt_sound_defaults.py` module contains the hardware-validated A007 model as immutable bytes and returns an independent validated copy. This is an internal model, not a complete decoded specification or a claim to match factory INIT settings.
-The generators replace its name, tags, file index and sample references and recalculate the CRC. Keep `dt_sound_defaults.py` at the repository root.
+The shared `scripts/digitakt/defaults.py` module contains the hardware-validated A007 model as immutable bytes and returns an independent validated copy. This is an internal model, not a complete decoded specification or a claim to match factory INIT settings.
+The generators replace its name, tags, file index and sample references and recalculate the CRC.
 
 ## Python organization
 
-The commands in `scripts/` are thin entry points. Keep the `digitakt/` package at the repository root; no installation framework or new Python dependency is required.
+The commands in `scripts/` are thin entry points alongside their internal `scripts/digitakt/` package. No installation framework or new Python dependency is required. Generated files remain in `generated_sounds/` at the repository root; tests and documentation remain in `test/` and `docs/`.
 
 | Module | Responsibility |
 | --- | --- |
