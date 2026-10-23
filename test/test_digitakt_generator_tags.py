@@ -9,7 +9,7 @@ import zlib
 
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT))
+sys.path.insert(0, str(ROOT / 'scripts'))
 from digitakt import cli as generator
 
 
@@ -71,10 +71,8 @@ class SoundTagsTest(unittest.TestCase):
             (root / "src").mkdir()
             (root / 'scripts').mkdir()
             shutil.copy(ROOT / "scripts/dt-make-sound", root / "scripts/dt-make-sound")
-            shutil.copytree(ROOT / 'digitakt', root / 'digitakt',
+            shutil.copytree(ROOT / 'scripts/digitakt', root / 'scripts/digitakt',
                             ignore=shutil.ignore_patterns('__pycache__'))
-            if (ROOT / 'dt_sound_defaults.py').exists():
-                shutil.copy(ROOT / 'dt_sound_defaults.py', root / 'dt_sound_defaults.py')
             for path in [root / "src/elektroid-cli", root / "scripts/dt-sample-meta"]:
                 path.write_text("#!/bin/sh\nprintf 'ID=0000021F\\nSIZE=35172\\nHASH=386982B5\\n'\n")
                 path.chmod(0o755)

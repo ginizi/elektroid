@@ -2,7 +2,7 @@
 
 from pathlib import Path
 import zlib
-from dt_sound_defaults import create_default_sound
+from .defaults import create_default_sound
 
 TAGS = (
     'KICK', 'SNARE', 'RIMSHOT', 'CLAP', 'TOM', 'PERCUSSION', 'HI-HAT',
